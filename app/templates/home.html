@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Home — Software Inventory{% endblock %}
+{% block content %}
+  <p class="metadata mb-2">Town of Apex</p>
+  <h1 class="text-4xl mb-2">Software Inventory</h1>
+  <p class="mb-8 max-w-2xl" style="color: var(--text-muted); line-height: 1.6;">
+    License assignment and fund-aware cost exploration. Browse software and people,
+    manage assignments, then review reports. Each license product is its own software
+    row (no nested pools). Billing fund always comes from the person record.
+  </p>
+
+  {% if counts %}
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+    {% for label, key in [("Funds","funds"),("People","people"),("Software","software"),("Assignments","assignments")] %}
+    <div class="card p-4">
+      <div class="metadata">{{ label }}</div>
+      <div class="text-2xl mt-1" style="font-family: var(--font-ui); font-weight: 800;">{{ counts[key] }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="flash flash-error mb-6">
+    Database not ready yet. Start the app once so schema + seed can load, or run
+    <code>python -m app.seed --force</code>.
+  </div>
+  {% endif %}
+
+  <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <a href="/software" class="card p-5 block hover:shadow-md transition-shadow">
+      <h2 class="text-lg mb-1">Software</h2>
+      <p class="text-sm" style="color: var(--text-muted);">Titles, seats, yearly cost, contracts.</p>
+    </a>
+    <a href="/people" class="card p-5 block hover:shadow-md transition-shadow">
+      <h2 class="text-lg mb-1">People</h2>
+      <p class="text-sm" style="color: var(--text-muted);">Employees, departments, funds, assignment counts.</p>
+    </a>
+    <a href="/assignments" class="card p-5 block hover:shadow-md transition-shadow">
+      <h2 class="text-lg mb-1">Assignments</h2>
+      <p class="text-sm" style="color: var(--text-muted);">Create, edit, or remove person ↔ software links.</p>
+    </a>
+    <a href="/reports" class="card p-5 block hover:shadow-md transition-shadow">
+      <h2 class="text-lg mb-1">Reports</h2>
+      <p class="text-sm" style="color: var(--text-muted);">Cost by fund/dept, seats used vs purchased.</p>
+    </a>
+  </div>
+
+  <div class="card p-5 text-sm space-y-2">
+    <h2 class="text-base mb-2">Admin</h2>
+    <ul class="space-y-1" style="color: var(--text-muted);">
+      <li><a style="color: var(--town-baltic-blue);" class="underline" href="/admin">Admin page</a> — backup, CSV export, stats</li>
+      <li><a style="color: var(--town-baltic-blue);" class="underline" href="/admin/backup">GET /admin/backup</a> — download <code>inventory.db</code></li>
+      <li><a style="color: var(--town-baltic-blue);" class="underline" href="/admin/export">GET /admin/export</a> — CSV zip</li>
+      <li><a style="color: var(--town-baltic-blue);" class="underline" href="/health">GET /health</a> — liveness</li>
+      <li><code>POST /admin/import-seed</code> — force clear/rebuild + re-import seed CSVs</li>
+    </ul>
+  </div>
+{% endblock %}

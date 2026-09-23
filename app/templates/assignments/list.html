@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Assignments — Software Inventory{% endblock %}
+{% block content %}
+  <div class="flex flex-wrap items-end justify-between gap-3 mb-6">
+    <div>
+      <p class="metadata mb-1">CRUD</p>
+      <h1 class="text-3xl">Assignments</h1>
+    </div>
+    <a href="/assignments/new" class="btn btn-primary">New assignment</a>
+  </div>
+
+  {% if flash %}
+  <div class="flash">{{ flash|replace('+', ' ') }}</div>
+  {% endif %}
+
+  <form method="get" action="/assignments" class="card p-4 mb-6">
+    <div class="filter-bar">
+      <div>
+        <label class="field-label" for="software_id">Software</label>
+        <select class="field-select" id="software_id" name="software_id">
+          <option value="">All</option>
+          {% for s in software_opts %}
+          <option value="{{ s.id }}" {% if filters.software_id == (s.id|string) %}selected{% endif %}>{{ s.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="field-label" for="person_id">Person</label>
+        <select class="field-select" id="person_id" name="person_id">
+          <option value="">All</option>
+          {% for p in people_opts %}
+          <option value="{{ p.employee_id }}" {% if filters.person_id == p.employee_id %}selected{% endif %}>
+            {{ p.last_name }}, {{ p.first_name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="field-label" for="department">Department</label>
+        <select class="field-select" id="department" name="department">
+          <option value="">All</option>
+          {% for d in people_filters.departments %}
+          <option value="{{ d }}" {% if filters.department == d %}selected{% endif %}>{{ d }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="field-label" for="fund_code">Fund</label>
+        <select class="field-select" id="fund_code" name="fund_code">
+          <option value="">All</option>
+          {% for f in people_filters.funds %}
+          <option value="{{ f.code }}" {% if filters.fund_code == f.code %}selected{% endif %}>{{ f.code }} — {{ f.label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="flex gap-2">
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a href="/assignments" class="btn btn-secondary">Reset</a>
+      </div>
+    </div>
+  </form>
+
+  <div class="card overflow-x-auto">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Software</th>
+          <th>Person</th>
+          <th>Department</th>
+          <th>Billing fund</th>
+          <th>Notes</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td>
+            <a href="/software/{{ r.software_key }}">{{ r.software_name }}</a>
+            <div class="text-xs" style="color: var(--text-muted);">{{ r.software_key }}</div>
+          </td>
+          <td>
+            <a href="/people/{{ r.person_id }}">{{ r.last_name }}, {{ r.first_name }}</a>
+            <div class="text-xs" style="color: var(--text-muted);">{{ r.person_id }}</div>
+          </td>
+          <td>{{ r.department_name or "—" }}</td>
+          <td>{{ r.fund_code }} — {{ r.fund_label }}</td>
+          <td>{{ r.notes or "—" }}</td>
+          <td class="whitespace-nowrap">
+            <a href="/assignments/{{ r.assignment_id }}/edit">Edit</a>
+            ·
+            <a href="/assignments/{{ r.assignment_id }}/delete" style="color: var(--town-cinnabar);">Delete</a>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="color: var(--text-muted);">No assignments matched these filters.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

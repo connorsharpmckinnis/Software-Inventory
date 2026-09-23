@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Reports — Software Inventory{% endblock %}
+{% block content %}
+  <p class="metadata mb-1">Analytics</p>
+  <h1 class="text-3xl mb-2">Reports</h1>
+  <p class="mb-6 text-sm max-w-3xl" style="color: var(--text-muted); line-height: 1.55;">
+    Billing always uses the person’s fund and department. Cost allocation:
+    <strong>per-seat</strong> with seats &gt; 0 → each assignment gets
+    <code>yearly_cost / seat_count</code> (unused seats unallocated; over-assignment can exceed software cost);
+    otherwise <strong>even-split</strong> the software yearly cost across assignments on that title.
+    KPI total = sum of <code>software.yearly_cost</code>.
+  </p>
+
+  <div class="grid sm:grid-cols-3 gap-3 mb-8">
+    <div class="card p-4">
+      <div class="metadata">Total yearly cost (all software)</div>
+      <div class="text-2xl mt-1" style="font-family: var(--font-ui); font-weight: 800;">
+        ${{ "{:,.0f}".format(kpis.total_yearly_cost) }}
+      </div>
+    </div>
+    <div class="card p-4">
+      <div class="metadata">Total seats purchased</div>
+      <div class="text-2xl mt-1" style="font-family: var(--font-ui); font-weight: 800;">{{ kpis.total_seats }}</div>
+    </div>
+    <div class="card p-4">
+      <div class="metadata">Total assignments</div>
+      <div class="text-2xl mt-1" style="font-family: var(--font-ui); font-weight: 800;">{{ kpis.total_assignments }}</div>
+    </div>
+  </div>
+
+  <h2 class="text-xl mb-3">Cost by fund</h2>
+  <div class="card overflow-x-auto mb-8">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Fund</th>
+          <th>Label</th>
+          <th>Assignments</th>
+          <th>Allocated yearly</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in by_fund %}
+        <tr>
+          <td>{{ r.fund_code }}</td>
+          <td>{{ r.fund_label }}</td>
+          <td>{{ r.assignment_count }}</td>
+          <td>${{ "{:,.2f}".format(r.allocated_cost) }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" style="color: var(--text-muted);">No assignments to allocate.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <h2 class="text-xl mb-3">Cost by department</h2>
+  <div class="card overflow-x-auto mb-8">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Department</th>
+          <th>Assignments</th>
+          <th>Allocated yearly</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in by_dept %}
+        <tr>
+          <td>{{ r.department_name }}</td>
+          <td>{{ r.assignment_count }}</td>
+          <td>${{ "{:,.2f}".format(r.allocated_cost) }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="3" style="color: var(--text-muted);">No assignments to allocate.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <h2 class="text-xl mb-3">Seats used vs purchased</h2>
+  <div class="card overflow-x-auto">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Software</th>
+          <th>License</th>
+          <th>Purchased</th>
+          <th>Used</th>
+          <th>Utilization</th>
+          <th>Yearly</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in seats %}
+        <tr>
+          <td><a href="/software/{{ r.software_key }}">{{ r.software_name }}</a></td>
+          <td>{{ r.license_type }}</td>
+          <td>{{ r.seats_purchased }}</td>
+          <td>{{ r.seats_used }}</td>
+          <td>
+            {% if r.utilization is not none %}
+              {{ "{:.0%}".format(r.utilization) }}
+            {% else %}—{% endif %}
+          </td>
+          <td>${{ "{:,.0f}".format(r.yearly_cost) }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="color: var(--text-muted);">No software.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

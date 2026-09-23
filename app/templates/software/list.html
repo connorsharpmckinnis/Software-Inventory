@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Software — Software Inventory{% endblock %}
+{% block content %}
+  <div class="flex flex-wrap items-end justify-between gap-3 mb-6">
+    <div>
+      <p class="metadata mb-1">Explorer</p>
+      <h1 class="text-3xl">Software</h1>
+    </div>
+    <div class="flex items-center gap-3">
+      <p class="text-sm" style="color: var(--text-muted);">{{ rows|length }} title{{ 's' if rows|length != 1 else '' }}</p>
+      <a href="/software/new" class="btn btn-primary">New software</a>
+    </div>
+  </div>
+
+  {% if flash %}
+  <div class="flash">{{ flash|replace('+', ' ') }}</div>
+  {% endif %}
+
+  <form method="get" action="/software" class="card p-4 mb-6">
+    <div class="filter-bar">
+      <div class="grow">
+        <label class="field-label" for="q">Search</label>
+        <input class="field-input" id="q" name="q" value="{{ filters.q }}" placeholder="Name, publisher, key…" />
+      </div>
+      <div>
+        <label class="field-label" for="license_type">License</label>
+        <select class="field-select" id="license_type" name="license_type">
+          <option value="">All</option>
+          {% for lt in options.license_types %}
+          <option value="{{ lt }}" {% if filters.license_type == lt %}selected{% endif %}>{{ lt }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="field-label" for="status">Status</label>
+        <select class="field-select" id="status" name="status">
+          <option value="">All</option>
+          {% for st in options.statuses %}
+          <option value="{{ st }}" {% if filters.status == st %}selected{% endif %}>{{ st }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="field-label" for="is_contract">Contract</label>
+        <select class="field-select" id="is_contract" name="is_contract">
+          <option value="">All</option>
+          <option value="1" {% if filters.is_contract == '1' %}selected{% endif %}>Yes</option>
+          <option value="0" {% if filters.is_contract == '0' %}selected{% endif %}>No</option>
+        </select>
+      </div>
+      <div>
+        <label class="field-label" for="primary_department">Department</label>
+        <select class="field-select" id="primary_department" name="primary_department">
+          <option value="">All</option>
+          {% for d in options.departments %}
+          <option value="{{ d }}" {% if filters.primary_department == d %}selected{% endif %}>{{ d }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="field-label" for="sort">Sort</label>
+        <select class="field-select" id="sort" name="sort">
+          {% for val, label in [("name","Name"),("publisher","Publisher"),("yearly_cost","Yearly cost"),("seat_count","Seats"),("license_type","License type")] %}
+          <option value="{{ val }}" {% if filters.sort == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="field-label" for="order">Order</label>
+        <select class="field-select" id="order" name="order">
+          <option value="asc" {% if filters.order == 'asc' %}selected{% endif %}>Asc</option>
+          <option value="desc" {% if filters.order == 'desc' %}selected{% endif %}>Desc</option>
+        </select>
+      </div>
+      <div class="flex gap-2">
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a href="/software" class="btn btn-secondary">Reset</a>
+      </div>
+    </div>
+  </form>
+
+  <div class="card overflow-x-auto">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Key</th>
+          <th>Name</th>
+          <th>Publisher</th>
+          <th>License</th>
+          <th>Seats</th>
+          <th>Yearly</th>
+          <th>Per seat</th>
+          <th>Contract</th>
+          <th>Dept</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td><a href="/software/{{ r.software_key }}">{{ r.software_key }}</a></td>
+          <td><a href="/software/{{ r.software_key }}">{{ r.name }}</a></td>
+          <td>{{ r.publisher or "—" }}</td>
+          <td>{{ r.license_type }}</td>
+          <td>{{ r.seat_count_sum }}</td>
+          <td>${{ "{:,.0f}".format(r.yearly_cost_sum) }}</td>
+          <td>
+            {% if r.per_seat_cost is not none %}
+              ${{ "{:,.2f}".format(r.per_seat_cost) }}
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            {% if r.is_contract %}
+              <span class="badge badge-yes">Y</span>
+            {% else %}
+              <span class="badge badge-no">N</span>
+            {% endif %}
+          </td>
+          <td>{{ r.primary_department or "—" }}</td>
+          <td>
+            <span class="badge {% if r.status == 'active' %}badge-active{% else %}badge-inactive{% endif %}">
+              {{ r.status }}
+            </span>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="10" style="color: var(--text-muted);">No software matched these filters.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

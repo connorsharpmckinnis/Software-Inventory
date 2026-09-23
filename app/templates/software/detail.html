@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}{{ software.name }} — Software Inventory{% endblock %}
+{% block content %}
+  <p class="mb-3"><a href="/software" class="btn btn-ghost" style="padding-left:0;">← Software</a></p>
+  {% if flash %}
+  <div class="flash">{{ flash|replace('+', ' ') }}</div>
+  {% endif %}
+  <div class="flex flex-wrap items-start justify-between gap-3 mb-2">
+    <div>
+      <p class="metadata mb-1">{{ software.software_key }}</p>
+      <h1 class="text-3xl mb-1">{{ software.name }}</h1>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <a href="/software/{{ software.software_key }}/edit" class="btn btn-secondary">Edit</a>
+      <a href="/assignments/new?software_id={{ software.id }}" class="btn btn-primary">Assign person</a>
+    </div>
+  </div>
+  <p class="mb-6 text-sm" style="color: var(--text-muted);">
+    {{ software.publisher or "Unknown publisher" }}
+    · {{ software.license_type }}
+    ·
+    {% if software.is_contract %}<span class="badge badge-yes">Contract</span>{% else %}<span class="badge badge-no">No contract</span>{% endif %}
+    ·
+    <span class="badge {% if software.status == 'active' %}badge-active{% else %}badge-inactive{% endif %}">{{ software.status }}</span>
+    {% if software.owner_name or software.owner_employee_id %}
+    · Owner: {{ software.owner_name or software.owner_employee_id }}
+    {% endif %}
+  </p>
+
+  <div class="grid sm:grid-cols-4 gap-3 mb-8">
+    <div class="card p-4">
+      <div class="metadata">Seats</div>
+      <div class="text-2xl mt-1" style="font-family: var(--font-ui); font-weight: 800;">{{ seat_count }}</div>
+    </div>
+    <div class="card p-4">
+      <div class="metadata">Yearly cost</div>
+      <div class="text-2xl mt-1" style="font-family: var(--font-ui); font-weight: 800;">${{ "{:,.0f}".format(yearly_cost) }}</div>
+    </div>
+    <div class="card p-4">
+      <div class="metadata">Per seat</div>
+      <div class="text-2xl mt-1" style="font-family: var(--font-ui); font-weight: 800;">
+        {% if per_seat is not none %}${{ "{:,.2f}".format(per_seat) }}{% else %}—{% endif %}
+      </div>
+    </div>
+    <div class="card p-4">
+      <div class="metadata">Department</div>
+      <div class="text-lg mt-1" style="font-family: var(--font-ui); font-weight: 700;">{{ software.primary_department or "—" }}</div>
+    </div>
+  </div>
+
+  {% if software.notes %}
+  <div class="card p-4 mb-6 text-sm">
+    <div class="metadata mb-1">Notes</div>
+    <p>{{ software.notes }}</p>
+  </div>
+  {% endif %}
+
+  <h2 class="text-xl mb-3">Assignments ({{ assignment_count }})</h2>
+  <div class="card overflow-x-auto">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Person</th>
+          <th>Department</th>
+          <th>Fund</th>
+          <th>Notes</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in assignments %}
+        <tr>
+          <td>
+            <a href="/people/{{ a.employee_id }}">{{ a.last_name }}, {{ a.first_name }}</a>
+            <div class="text-xs" style="color: var(--text-muted);">{{ a.employee_id }}</div>
+          </td>
+          <td>{{ a.department_name or "—" }}</td>
+          <td>{{ a.fund_code }} — {{ a.fund_label }}</td>
+          <td>{{ a.notes or "—" }}</td>
+          <td class="whitespace-nowrap">
+            <a href="/assignments/{{ a.assignment_id }}/edit">Edit</a>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" style="color: var(--text-muted);">No assignments yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

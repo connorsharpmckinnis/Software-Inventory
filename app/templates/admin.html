@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Admin — Software Inventory{% endblock %}
+{% block content %}
+  <p class="metadata mb-1">Maintenance</p>
+  <h1 class="text-3xl mb-2">Admin</h1>
+  <p class="mb-6 text-sm" style="color: var(--text-muted);">
+    Backup the SQLite file or export CSV dumps for David. Force seed re-import clears and rebuilds the DB (prototype-safe).
+  </p>
+
+  {% if counts %}
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+    {% for label, key in [("Funds","funds"),("People","people"),("Software","software"),("Assignments","assignments")] %}
+    <div class="card p-4">
+      <div class="metadata">{{ label }}</div>
+      <div class="text-2xl mt-1" style="font-family: var(--font-ui); font-weight: 800;">{{ counts[key] }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="grid sm:grid-cols-2 gap-4 mb-8">
+    <div class="card p-5 space-y-3">
+      <h2 class="text-lg">Backup</h2>
+      <p class="text-sm" style="color: var(--text-muted);">Download the live <code>inventory.db</code> SQLite file.</p>
+      <a class="btn btn-primary" href="/admin/backup">Download inventory.db</a>
+    </div>
+    <div class="card p-5 space-y-3">
+      <h2 class="text-lg">CSV export</h2>
+      <p class="text-sm" style="color: var(--text-muted);">
+        Zip of <code>funds</code>, <code>people</code>, <code>software</code>, <code>assignments</code>
+        CSVs (COLUMN_MAP-aligned). No pools file.
+      </p>
+      <a class="btn btn-primary" href="/admin/export">Download CSV zip</a>
+    </div>
+  </div>
+
+  <div class="card p-5 text-sm space-y-2">
+    <h2 class="text-base mb-2">Other</h2>
+    <ul class="space-y-1" style="color: var(--text-muted);">
+      <li><a class="underline" style="color: var(--town-baltic-blue);" href="/admin/stats">GET /admin/stats</a> — row counts JSON</li>
+      <li><code>POST /admin/import-seed</code> — force clear/rebuild + re-import <code>data/seed/*.csv</code></li>
+      <li><a class="underline" style="color: var(--town-baltic-blue);" href="/health">GET /health</a> — liveness</li>
+      <li><a class="underline" style="color: var(--town-baltic-blue);" href="/reports">Reports</a> — cost &amp; seats</li>
+    </ul>
+  </div>
+{% endblock %}

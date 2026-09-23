@@ -1,0 +1,28 @@
+# SQLite database (backup by copying this file)
+data/inventory.db
+data/inventory.db-*
+*.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.venv/
+venv/
+env/
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+*.swp
+*~
+
+# Env
+.env
+.env.local

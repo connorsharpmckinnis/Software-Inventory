@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}{{ person.first_name }} {{ person.last_name }} — Software Inventory{% endblock %}
+{% block content %}
+  <p class="mb-3"><a href="/people" class="btn btn-ghost" style="padding-left:0;">← People</a></p>
+  <p class="metadata mb-1">{{ person.employee_id }}</p>
+  <h1 class="text-3xl mb-1">{{ person.first_name }} {{ person.last_name }}</h1>
+  <p class="mb-6 text-sm" style="color: var(--text-muted);">
+    {{ person.department_name or "No department" }}
+    ·
+    <span class="badge {% if person.status == 'active' %}badge-active{% else %}badge-inactive{% endif %}">{{ person.status }}</span>
+  </p>
+
+  <div class="grid sm:grid-cols-3 gap-3 mb-8">
+    <div class="card p-4">
+      <div class="metadata">Billing fund</div>
+      <div class="text-lg mt-1" style="font-family: var(--font-ui); font-weight: 700;">
+        {{ person.fund_code }} — {{ person.fund_label }}
+      </div>
+      <p class="text-xs mt-1" style="color: var(--text-muted);">Always from person record (not editable on assignment)</p>
+    </div>
+    <div class="card p-4">
+      <div class="metadata">Email</div>
+      <div class="text-base mt-1">{{ person.email or "—" }}</div>
+    </div>
+    <div class="card p-4">
+      <div class="metadata">Assignments</div>
+      <div class="text-2xl mt-1" style="font-family: var(--font-ui); font-weight: 800;">{{ assignments|length }}</div>
+    </div>
+  </div>
+
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+    <h2 class="text-xl">Assignments</h2>
+    <a href="/assignments/new?person_id={{ person.employee_id }}" class="btn btn-primary">Assign software</a>
+  </div>
+  <div class="card overflow-x-auto">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Software</th>
+          <th>Key</th>
+          <th>Notes</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in assignments %}
+        <tr>
+          <td><a href="/software/{{ a.software_key }}">{{ a.software_name }}</a></td>
+          <td>{{ a.software_key }}</td>
+          <td>{{ a.notes or "—" }}</td>
+          <td class="whitespace-nowrap">
+            <a href="/assignments/{{ a.assignment_id }}/edit">Edit</a>
+            ·
+            <a href="/assignments/{{ a.assignment_id }}/delete" style="color: var(--town-cinnabar);">Delete</a>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" style="color: var(--text-muted);">No assignments yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

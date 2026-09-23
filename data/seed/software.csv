@@ -1,0 +1,7 @@
+software_key,name,publisher,license_type,seat_count,yearly_cost,is_contract,primary_department,owner_employee_id,owner_name,status,notes
+SW-001,Microsoft 365 E3,Microsoft,per-seat,120,86400,yes,IT,E1001,David Epley,active,Townwide productivity suite
+SW-002,Adobe Creative Cloud,Adobe,per-seat,8,7200,yes,Communications,E1004,Alex Rivera,active,Design team seats
+SW-003,Cityworks,Trimble,concurrent,25,45000,yes,Public Works,E1003,Sam Patel,active,Work order / asset system
+SW-004,Polimorphic,Polimorphic,site,1,28000,yes,IT,E1002,Connor McKinnis,active,Chatbot + CRM; site license
+SW-005,Slack,Salesforce,per-seat,15,1800,no,IT,E1001,David Epley,active,Pilot; not on contract
+SW-006,Adobe Creative Cloud (Temp contractor),Adobe,per-seat,2,1800,yes,Communications,E1004,Alex Rivera,active,Former Adobe pool_2 — Temp contractor seats (separate product row)

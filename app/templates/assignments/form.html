@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} — Software Inventory{% endblock %}
+{% block content %}
+  <p class="mb-3"><a href="/assignments" class="btn btn-ghost" style="padding-left:0;">← Assignments</a></p>
+  <p class="metadata mb-1">{% if mode == 'create' %}Create{% else %}Edit{% endif %}</p>
+  <h1 class="text-3xl mb-6">{{ title }}</h1>
+
+  {% if error %}
+  <div class="flash flash-error">{{ error|replace('+', ' ') }}</div>
+  {% endif %}
+
+  {% if mode == 'create' %}
+  <form method="post" action="/assignments/new" class="card p-5 max-w-xl space-y-4">
+    <div>
+      <label class="field-label" for="person_id">Person</label>
+      <select class="field-select" id="person_id" name="person_id" required>
+        <option value="">Select person…</option>
+        {% for p in people_opts %}
+        <option value="{{ p.employee_id }}" {% if selected_person == p.employee_id %}selected{% endif %}>
+          {{ p.last_name }}, {{ p.first_name }} ({{ p.employee_id }}) — fund {{ p.fund_code }}
+        </option>
+        {% endfor %}
+      </select>
+      <p class="text-xs mt-1" style="color: var(--text-muted);">Billing fund is always the person’s fund (display-only after save).</p>
+    </div>
+    <div>
+      <label class="field-label" for="software_id">Software</label>
+      <select class="field-select" id="software_id" name="software_id" required>
+        <option value="">Select software…</option>
+        {% for s in software_opts %}
+        <option value="{{ s.id }}" {% if selected_software == (s.id|string) %}selected{% endif %}>
+          {{ s.name }} ({{ s.software_key }})
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="field-label" for="notes">Notes</label>
+      <textarea class="field-textarea" id="notes" name="notes" rows="3">{{ notes }}</textarea>
+    </div>
+    <div class="flex gap-2 pt-2">
+      <button type="submit" class="btn btn-primary">Create assignment</button>
+      <a href="/assignments" class="btn btn-secondary">Cancel</a>
+    </div>
+  </form>
+  {% else %}
+  <form method="post" action="/assignments/{{ assignment.assignment_id }}/edit" class="card p-5 max-w-xl space-y-4">
+    <div class="grid sm:grid-cols-2 gap-3">
+      <div class="card p-3" style="background: var(--bg-inner); border: none;">
+        <div class="metadata">Person</div>
+        <div class="mt-1 font-semibold">
+          <a href="/people/{{ assignment.person_id }}">{{ assignment.last_name }}, {{ assignment.first_name }}</a>
+        </div>
+      </div>
+      <div class="card p-3" style="background: var(--bg-inner); border: none;">
+        <div class="metadata">Software</div>
+        <div class="mt-1 font-semibold">
+          <a href="/software/{{ assignment.software_key }}">{{ assignment.software_name }}</a>
+        </div>
+      </div>
+    </div>
+    <div>
+      <label class="field-label">Billing fund (read-only)</label>
+      <input class="field-input" value="{{ assignment.fund_code }} — {{ assignment.fund_label }}" disabled />
+    </div>
+    <div>
+      <label class="field-label" for="notes">Notes</label>
+      <textarea class="field-textarea" id="notes" name="notes" rows="3">{{ notes }}</textarea>
+    </div>
+    <div class="flex gap-2 pt-2">
+      <button type="submit" class="btn btn-primary">Save changes</button>
+      <a href="/assignments" class="btn btn-secondary">Cancel</a>
+      <a href="/assignments/{{ assignment.assignment_id }}/delete" class="btn btn-danger ml-auto">Delete</a>
+    </div>
+  </form>
+  {% endif %}
+{% endblock %}

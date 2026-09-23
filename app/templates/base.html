@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}{{ title or "Software Inventory" }}{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            forest: '#3f873F',
+            hunter: '#40683C',
+            sunflower: '#F3BD48',
+            baltic: '#00586F',
+            cinnabar: '#D75742',
+            canvas: '#f5f5f5',
+            surface: '#ffffff',
+            inner: '#ededed',
+            'grey-olive': '#968c83',
+            muted: '#796e65',
+            main: '#1a1a1a',
+          },
+          fontFamily: {
+            display: ['"DM Serif Display"', 'serif'],
+            ui: ['Montserrat', 'sans-serif'],
+            body: ['Inter', 'sans-serif'],
+          },
+          borderRadius: {
+            card: '12px',
+            btn: '6px',
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    :root {
+      --town-forest-green: #3f873F;
+      --town-hunter-green: #40683C;
+      --town-sunflower-gold: #F3BD48;
+      --town-baltic-blue: #00586F;
+      --town-cinnabar: #D75742;
+      --town-grey-olive: #968c83;
+      --town-dim-grey: #796e65;
+      --bg-canvas: #f5f5f5;
+      --bg-surface: #ffffff;
+      --bg-inner: #ededed;
+      --text-main: #1a1a1a;
+      --text-muted: #796e65;
+      --border-strong: #968c83;
+      --brand-primary: #3f873F;
+      --brand-primary-soft: rgba(63, 135, 63, 0.15);
+      --radius-card: 12px;
+      --radius-btn: 6px;
+      --font-display: 'DM Serif Display', serif;
+      --font-ui: 'Montserrat', sans-serif;
+      --font-body: 'Inter', sans-serif;
+    }
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-canvas);
+      color: var(--text-main);
+    }
+    h1, .title-serif {
+      font-family: var(--font-display);
+      font-weight: 400;
+      letter-spacing: -0.01em;
+      color: var(--brand-primary);
+    }
+    h2, h3, .title-ui {
+      font-family: var(--font-ui);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text-main);
+    }
+    .metadata {
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+    .card {
+      background: var(--bg-surface);
+      border-radius: var(--radius-card);
+      border: 1px solid #f9f3ec;
+      box-shadow: 0 1px 2px rgba(26, 26, 26, 0.04);
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius-btn);
+      font-family: var(--font-ui);
+      font-weight: 600;
+      font-size: 0.875rem;
+      line-height: 1.25;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.15s, box-shadow 0.15s;
+    }
+    .btn-primary {
+      background: var(--town-forest-green);
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: var(--town-hunter-green);
+      box-shadow: 0 4px 12px rgba(68, 105, 61, 0.2);
+    }
+    .btn-secondary {
+      background: var(--bg-inner);
+      color: var(--text-main);
+    }
+    .btn-secondary:hover { background: #e2e2e2; }
+    .btn-ghost {
+      background: transparent;
+      color: var(--town-forest-green);
+    }
+    .btn-ghost:hover { background: var(--brand-primary-soft); }
+    .btn-danger {
+      background: var(--town-cinnabar);
+      color: #fff;
+    }
+    .btn-danger:hover { filter: brightness(1.05); }
+    .field-label {
+      display: block;
+      font-weight: 600;
+      font-size: 0.875rem;
+      margin-bottom: 0.35rem;
+      color: var(--text-main);
+    }
+    .field-input, .field-select, .field-textarea {
+      width: 100%;
+      background: var(--bg-inner);
+      border: 1px solid transparent;
+      border-radius: var(--radius-btn);
+      padding: 0.55rem 0.75rem;
+      font-family: var(--font-body);
+      font-size: 0.875rem;
+      color: var(--text-main);
+      outline: none;
+    }
+    .field-input:focus, .field-select:focus, .field-textarea:focus {
+      background: #fff;
+      border-color: var(--town-forest-green);
+      box-shadow: 0 0 0 4px var(--brand-primary-soft);
+    }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+    .data-table th {
+      text-align: left;
+      font-family: var(--font-ui);
+      font-weight: 700;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      padding: 0.65rem 0.75rem;
+      border-bottom: 1px solid var(--border-strong);
+      background: var(--bg-inner);
+    }
+    .data-table td {
+      padding: 0.7rem 0.75rem;
+      border-bottom: 1px solid #f0ebe6;
+      vertical-align: top;
+    }
+    .data-table tr:hover td { background: rgba(63, 135, 63, 0.04); }
+    .data-table a {
+      color: var(--town-baltic-blue);
+      font-weight: 500;
+      text-decoration: none;
+    }
+    .data-table a:hover { text-decoration: underline; }
+    .badge {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .badge-yes { background: var(--brand-primary-soft); color: var(--town-forest-green); }
+    .badge-no { background: var(--bg-inner); color: var(--text-muted); }
+    .badge-active { background: var(--brand-primary-soft); color: var(--town-forest-green); }
+    .badge-inactive { background: #fde8e4; color: var(--town-cinnabar); }
+    .nav-link {
+      color: rgba(255,255,255,0.85);
+      font-family: var(--font-ui);
+      font-weight: 600;
+      font-size: 0.8rem;
+      text-decoration: none;
+      padding: 0.35rem 0.6rem;
+      border-radius: var(--radius-btn);
+    }
+    .nav-link:hover, .nav-link.active {
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+    }
+    .flash {
+      border-left: 4px solid var(--town-forest-green);
+      background: #fff;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-btn);
+      margin-bottom: 1rem;
+      font-size: 0.875rem;
+    }
+    .flash-error {
+      border-left-color: var(--town-cinnabar);
+    }
+    .filter-bar {
+      display: grid;
+      gap: 0.75rem;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      align-items: end;
+    }
+    .filter-bar .grow { grid-column: span 2; }
+    @media (max-width: 640px) {
+      .filter-bar .grow { grid-column: span 1; }
+    }
+  </style>
+  {% block head %}{% endblock %}
+</head>
+<body class="min-h-screen flex flex-col">
+  <header style="background: var(--town-forest-green);">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+      <a href="/" class="text-white font-ui font-extrabold text-lg tracking-tight" style="font-family: var(--font-ui);">
+        Software Inventory
+      </a>
+      <nav class="flex flex-wrap items-center gap-1">
+        <a class="nav-link {% if request.url.path == '/' %}active{% endif %}" href="/">Home</a>
+        <a class="nav-link {% if request.url.path.startswith('/software') %}active{% endif %}" href="/software">Software</a>
+        <a class="nav-link {% if request.url.path.startswith('/people') %}active{% endif %}" href="/people">People</a>
+        <a class="nav-link {% if request.url.path.startswith('/assignments') %}active{% endif %}" href="/assignments">Assignments</a>
+        <a class="nav-link {% if request.url.path.startswith('/reports') %}active{% endif %}" href="/reports">Reports</a>
+        <a class="nav-link {% if request.url.path.startswith('/admin') %}active{% endif %}" href="/admin">Admin</a>
+      </nav>
+    </div>
+  </header>
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-8">
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="max-w-6xl mx-auto w-full px-4 py-6 text-xs border-t mt-auto" style="color: var(--text-muted); border-color: #e8e0d8;">
+    Town of Apex — internal prototype. Backup = copy <code>data/inventory.db</code>.
+  </footer>
+</body>
+</html>

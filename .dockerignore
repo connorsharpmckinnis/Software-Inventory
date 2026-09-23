@@ -1,0 +1,9 @@
+.venv
+venv
+__pycache__
+*.pyc
+.git
+.gitignore
+data/inventory.db
+*.db
+.DS_Store

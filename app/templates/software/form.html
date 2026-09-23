@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} — Software Inventory{% endblock %}
+{% block content %}
+  <p class="mb-3"><a href="{% if mode == 'edit' %}/software/{{ software.software_key }}{% else %}/software{% endif %}" class="btn btn-ghost" style="padding-left:0;">← Back</a></p>
+  <p class="metadata mb-1">{% if mode == 'create' %}Create{% else %}Edit{% endif %}</p>
+  <h1 class="text-3xl mb-6">{{ title }}</h1>
+
+  {% if error %}
+  <div class="flash flash-error">{{ error|replace('+', ' ') }}</div>
+  {% endif %}
+
+  <form method="post" action="{% if mode == 'create' %}/software/new{% else %}/software/{{ software.software_key }}/edit{% endif %}" class="card p-5 max-w-2xl space-y-4">
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div>
+        <label class="field-label" for="software_key">Software key</label>
+        {% if mode == 'create' %}
+        <input class="field-input" id="software_key" name="software_key" value="{{ form.software_key }}" required placeholder="e.g. adobe-cc" />
+        <p class="text-xs mt-1" style="color: var(--text-muted);">Stable id — locked after create.</p>
+        {% else %}
+        <input class="field-input" id="software_key" value="{{ form.software_key }}" disabled />
+        <p class="text-xs mt-1" style="color: var(--text-muted);">Key cannot be changed after create.</p>
+        {% endif %}
+      </div>
+      <div>
+        <label class="field-label" for="name">Name</label>
+        <input class="field-input" id="name" name="name" value="{{ form.name }}" required />
+      </div>
+    </div>
+
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div>
+        <label class="field-label" for="publisher">Publisher</label>
+        <input class="field-input" id="publisher" name="publisher" value="{{ form.publisher }}" />
+      </div>
+      <div>
+        <label class="field-label" for="license_type">License type</label>
+        <select class="field-select" id="license_type" name="license_type">
+          {% for lt in license_choices %}
+          <option value="{{ lt }}" {% if form.license_type == lt %}selected{% endif %}>{{ lt }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div>
+        <label class="field-label" for="seat_count">Seat count</label>
+        <input class="field-input" id="seat_count" name="seat_count" type="number" min="0" step="1" value="{{ form.seat_count }}" />
+      </div>
+      <div>
+        <label class="field-label" for="yearly_cost">Yearly cost ($)</label>
+        <input class="field-input" id="yearly_cost" name="yearly_cost" type="number" min="0" step="0.01" value="{{ form.yearly_cost }}" />
+      </div>
+    </div>
+
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div>
+        <label class="field-label" for="primary_department">Primary department</label>
+        <input class="field-input" id="primary_department" name="primary_department" list="dept-list" value="{{ form.primary_department }}" />
+        <datalist id="dept-list">
+          {% for d in departments %}
+          <option value="{{ d }}"></option>
+          {% endfor %}
+        </datalist>
+      </div>
+      <div>
+        <label class="field-label" for="status">Status</label>
+        <select class="field-select" id="status" name="status">
+          {% for st in ["active", "inactive", "retired"] %}
+          <option value="{{ st }}" {% if form.status == st %}selected{% endif %}>{{ st }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div>
+        <label class="field-label" for="owner_employee_id">Owner (employee)</label>
+        <select class="field-select" id="owner_employee_id" name="owner_employee_id">
+          <option value="">— none —</option>
+          {% for p in people %}
+          <option value="{{ p.employee_id }}" {% if form.owner_employee_id == p.employee_id %}selected{% endif %}>
+            {{ p.last_name }}, {{ p.first_name }} ({{ p.employee_id }})
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="field-label" for="owner_name">Owner name (display)</label>
+        <input class="field-input" id="owner_name" name="owner_name" value="{{ form.owner_name }}" />
+      </div>
+    </div>
+
+    <div>
+      <label class="inline-flex items-center gap-2 text-sm font-semibold">
+        <input type="checkbox" name="is_contract" value="1" {% if form.is_contract %}checked{% endif %} />
+        Contract / formal agreement
+      </label>
+    </div>
+
+    <div>
+      <label class="field-label" for="notes">Notes</label>
+      <textarea class="field-textarea" id="notes" name="notes" rows="3">{{ form.notes }}</textarea>
+    </div>
+
+    <div class="flex gap-2 pt-2">
+      <button type="submit" class="btn btn-primary">{% if mode == 'create' %}Create software{% else %}Save changes{% endif %}</button>
+      <a href="{% if mode == 'edit' %}/software/{{ software.software_key }}{% else %}/software{% endif %}" class="btn btn-secondary">Cancel</a>
+      {% if mode == 'edit' %}
+      <a href="/software/{{ software.software_key }}/delete" class="btn btn-danger ml-auto">Delete</a>
+      {% endif %}
+    </div>
+  </form>
+{% endblock %}

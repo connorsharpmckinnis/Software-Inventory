@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Delete assignment — Software Inventory{% endblock %}
+{% block content %}
+  <p class="mb-3"><a href="/assignments" class="btn btn-ghost" style="padding-left:0;">← Assignments</a></p>
+  <p class="metadata mb-1">Confirm</p>
+  <h1 class="text-3xl mb-4">Delete assignment?</h1>
+
+  <div class="card p-5 max-w-xl mb-6">
+    <dl class="space-y-3 text-sm">
+      <div>
+        <dt class="metadata">Software</dt>
+        <dd class="mt-0.5 font-semibold">{{ assignment.software_name }} ({{ assignment.software_key }})</dd>
+      </div>
+      <div>
+        <dt class="metadata">Person</dt>
+        <dd class="mt-0.5 font-semibold">{{ assignment.last_name }}, {{ assignment.first_name }} ({{ assignment.person_id }})</dd>
+      </div>
+      <div>
+        <dt class="metadata">Billing fund</dt>
+        <dd class="mt-0.5">{{ assignment.fund_code }} — {{ assignment.fund_label }}</dd>
+      </div>
+      {% if assignment.notes %}
+      <div>
+        <dt class="metadata">Notes</dt>
+        <dd class="mt-0.5">{{ assignment.notes }}</dd>
+      </div>
+      {% endif %}
+    </dl>
+  </div>
+
+  <form method="post" action="/assignments/{{ assignment.assignment_id }}/delete" class="flex gap-2">
+    <button type="submit" class="btn btn-danger">Yes, delete</button>
+    <a href="/assignments" class="btn btn-secondary">Cancel</a>
+  </form>
+{% endblock %}

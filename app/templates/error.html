@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} — Software Inventory{% endblock %}
+{% block content %}
+  <div class="card p-6">
+    <p class="metadata mb-2">Error</p>
+    <h1 class="text-3xl mb-3">{{ title }}</h1>
+    <p class="mb-4" style="color: var(--text-muted);">{{ message }}</p>
+    <a href="/" class="btn btn-secondary">Back home</a>
+  </div>
+{% endblock %}

@@ -1,0 +1,11 @@
+wdsservices:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      # Persist SQLite + allow editing seed CSVs on the host
+      - ./data:/app/data
+    environment:
+      INVENTORY_DB: /app/data/inventory.db
+    # Auto-seed runs on startup when DB is empty (see app/main.py lifespan)

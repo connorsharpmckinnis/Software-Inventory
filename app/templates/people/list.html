@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}People — Software Inventory{% endblock %}
+{% block content %}
+  <div class="flex flex-wrap items-end justify-between gap-3 mb-6">
+    <div>
+      <p class="metadata mb-1">Explorer</p>
+      <h1 class="text-3xl">People</h1>
+    </div>
+    <p class="text-sm" style="color: var(--text-muted);">{{ rows|length }} person{{ 's' if rows|length != 1 else '' }}</p>
+  </div>
+
+  <form method="get" action="/people" class="card p-4 mb-6">
+    <div class="filter-bar">
+      <div class="grow">
+        <label class="field-label" for="q">Search</label>
+        <input class="field-input" id="q" name="q" value="{{ filters.q }}" placeholder="Name, email, ID…" />
+      </div>
+      <div>
+        <label class="field-label" for="department">Department</label>
+        <select class="field-select" id="department" name="department">
+          <option value="">All</option>
+          {% for d in options.departments %}
+          <option value="{{ d }}" {% if filters.department == d %}selected{% endif %}>{{ d }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="field-label" for="fund_code">Fund</label>
+        <select class="field-select" id="fund_code" name="fund_code">
+          <option value="">All</option>
+          {% for f in options.funds %}
+          <option value="{{ f.code }}" {% if filters.fund_code == f.code %}selected{% endif %}>{{ f.code }} — {{ f.label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="field-label" for="status">Status</label>
+        <select class="field-select" id="status" name="status">
+          <option value="">All</option>
+          {% for st in options.statuses %}
+          <option value="{{ st }}" {% if filters.status == st %}selected{% endif %}>{{ st }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="field-label" for="sort">Sort</label>
+        <select class="field-select" id="sort" name="sort">
+          {% for val, label in [("name","Name"),("department","Department"),("fund","Fund"),("assignment_count","Assignments")] %}
+          <option value="{{ val }}" {% if filters.sort == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="field-label" for="order">Order</label>
+        <select class="field-select" id="order" name="order">
+          <option value="asc" {% if filters.order == 'asc' %}selected{% endif %}>Asc</option>
+          <option value="desc" {% if filters.order == 'desc' %}selected{% endif %}>Desc</option>
+        </select>
+      </div>
+      <div class="flex gap-2">
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a href="/people" class="btn btn-secondary">Reset</a>
+      </div>
+    </div>
+  </form>
+
+  <div class="card overflow-x-auto">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Department</th>
+          <th>Fund</th>
+          <th>Email</th>
+          <th>Status</th>
+          <th># Assignments</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td><a href="/people/{{ r.employee_id }}">{{ r.employee_id }}</a></td>
+          <td><a href="/people/{{ r.employee_id }}">{{ r.last_name }}, {{ r.first_name }}</a></td>
+          <td>{{ r.department_name or "—" }}</td>
+          <td>{{ r.fund_code }} — {{ r.fund_label }}</td>
+          <td>{{ r.email or "—" }}</td>
+          <td>
+            <span class="badge {% if r.status == 'active' %}badge-active{% else %}badge-inactive{% endif %}">
+              {{ r.status }}
+            </span>
+          </td>
+          <td>{{ r.assignment_count }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" style="color: var(--text-muted);">No people matched these filters.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

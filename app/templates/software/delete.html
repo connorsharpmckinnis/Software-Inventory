@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Delete software — Software Inventory{% endblock %}
+{% block content %}
+  <p class="mb-3"><a href="/software/{{ software.software_key }}" class="btn btn-ghost" style="padding-left:0;">← {{ software.name }}</a></p>
+  <p class="metadata mb-1">Confirm</p>
+  <h1 class="text-3xl mb-4">Delete software?</h1>
+
+  <div class="card p-5 max-w-xl mb-6">
+    <dl class="space-y-3 text-sm">
+      <div>
+        <dt class="metadata">Key</dt>
+        <dd class="mt-0.5 font-semibold">{{ software.software_key }}</dd>
+      </div>
+      <div>
+        <dt class="metadata">Name</dt>
+        <dd class="mt-0.5 font-semibold">{{ software.name }}</dd>
+      </div>
+      <div>
+        <dt class="metadata">Assignments</dt>
+        <dd class="mt-0.5">{{ assignment_count }}</dd>
+      </div>
+    </dl>
+  </div>
+
+  {% if blocked %}
+  <div class="flash flash-error mb-4">
+    Cannot delete while {{ assignment_count }} assignment(s) exist.
+    Unassign people first (safer for Town inventory), then try again.
+  </div>
+  <a href="/software/{{ software.software_key }}" class="btn btn-secondary">Back</a>
+  <a href="/assignments?software_id={{ software.id }}" class="btn btn-primary">View assignments</a>
+  {% else %}
+  <p class="text-sm mb-4" style="color: var(--text-muted);">
+    This will remove the software title. This cannot be undone (except via seed re-import / backup restore).
+  </p>
+  <form method="post" action="/software/{{ software.software_key }}/delete" class="flex gap-2">
+    <button type="submit" class="btn btn-danger">Yes, delete</button>
+    <a href="/software/{{ software.software_key }}" class="btn btn-secondary">Cancel</a>
+  </form>
+  {% endif %}
+{% endblock %}
