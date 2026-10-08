@@ -3,6 +3,9 @@ data/inventory.db
 data/inventory.db-*
 *.db
 
+# Transient bulk-import uploads
+data/uploads/
+
 # Python
 __pycache__/
 *.py[cod]

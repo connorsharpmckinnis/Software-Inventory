@@ -8,6 +8,7 @@
     </div>
     <div class="flex items-center gap-3">
       <p class="text-sm" style="color: var(--text-muted);">{{ rows|length }} title{{ 's' if rows|length != 1 else '' }}</p>
+      <a href="/admin/import/software" class="btn btn-secondary">Import CSV</a>
       <a href="/software/new" class="btn btn-primary">New software</a>
     </div>
   </div>
@@ -83,40 +84,39 @@
     <table class="data-table">
       <thead>
         <tr>
-          <th>Key</th>
-          <th>Name</th>
-          <th>Publisher</th>
-          <th>License</th>
-          <th>Seats</th>
-          <th>Yearly</th>
-          <th>Per seat</th>
-          <th>Contract</th>
-          <th>Dept</th>
+          <th>Application</th>
+          <th>Department</th>
+          <th>Owner</th>
+          <th>Users</th>
+          <th>Cost</th>
+          <th>Ext. facing</th>
+          <th>Sensitive</th>
           <th>Status</th>
         </tr>
       </thead>
       <tbody>
         {% for r in rows %}
         <tr>
-          <td><a href="/software/{{ r.software_key }}">{{ r.software_key }}</a></td>
-          <td><a href="/software/{{ r.software_key }}">{{ r.name }}</a></td>
-          <td>{{ r.publisher or "—" }}</td>
-          <td>{{ r.license_type }}</td>
-          <td>{{ r.seat_count_sum }}</td>
-          <td>${{ "{:,.0f}".format(r.yearly_cost_sum) }}</td>
           <td>
-            {% if r.per_seat_cost is not none %}
-              ${{ "{:,.2f}".format(r.per_seat_cost) }}
-            {% else %}—{% endif %}
-          </td>
-          <td>
-            {% if r.is_contract %}
-              <span class="badge badge-yes">Y</span>
-            {% else %}
-              <span class="badge badge-no">N</span>
-            {% endif %}
+            <a href="/software/{{ r.software_key }}">{{ r.name }}</a>
+            <div class="text-xs" style="color: var(--text-muted);">{{ r.software_key }}</div>
           </td>
           <td>{{ r.primary_department or "—" }}</td>
+          <td>{{ r.owner_name or "—" }}</td>
+          <td>{{ r.users or "—" }}</td>
+          <td>${{ "{:,.0f}".format(r.yearly_cost_sum) }}</td>
+          <td>
+            {% if r.external_facing %}
+              <span class="badge badge-yes">Yes</span>
+            {% else %}
+              <span class="badge badge-no">No</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if r.sensitive_data %}
+              <span class="badge {% if r.sensitive_data|lower == 'yes' %}badge-inactive{% else %}badge-type{% endif %}">{{ r.sensitive_data }}</span>
+            {% else %}—{% endif %}
+          </td>
           <td>
             <span class="badge {% if r.status == 'active' %}badge-active{% else %}badge-inactive{% endif %}">
               {{ r.status }}
@@ -124,7 +124,7 @@
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="10" style="color: var(--text-muted);">No software matched these filters.</td></tr>
+        <tr><td colspan="8" style="color: var(--text-muted);">No software matched these filters.</td></tr>
         {% endfor %}
       </tbody>
     </table>

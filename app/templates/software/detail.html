@@ -12,39 +12,65 @@
     </div>
     <div class="flex flex-wrap gap-2">
       <a href="/software/{{ software.software_key }}/edit" class="btn btn-secondary">Edit</a>
+      <a href="/assignments/bulk?software_id={{ software.id }}" class="btn btn-secondary">Bulk assign</a>
       <a href="/assignments/new?software_id={{ software.id }}" class="btn btn-primary">Assign person</a>
     </div>
   </div>
   <p class="mb-6 text-sm" style="color: var(--text-muted);">
-    {{ software.publisher or "Unknown publisher" }}
-    · {{ software.license_type }}
-    ·
-    {% if software.is_contract %}<span class="badge badge-yes">Contract</span>{% else %}<span class="badge badge-no">No contract</span>{% endif %}
+    {{ software.primary_department or "No department" }}
+    {% if software.owner_name %} · Owner: {{ software.owner_name }}{% endif %}
+    {% if software.users %} · Users: {{ software.users }}{% endif %}
     ·
     <span class="badge {% if software.status == 'active' %}badge-active{% else %}badge-inactive{% endif %}">{{ software.status }}</span>
-    {% if software.owner_name or software.owner_employee_id %}
-    · Owner: {{ software.owner_name or software.owner_employee_id }}
+    {% if software.external_facing %}<span class="badge badge-yes">External facing</span>{% endif %}
+    {% if software.external_use %}<span class="badge badge-yes">External use</span>{% endif %}
+    {% if software.sensitive_data %}
+    <span class="badge {% if software.sensitive_data|lower == 'yes' %}badge-inactive{% else %}badge-type{% endif %}">{{ software.sensitive_data }}</span>
     {% endif %}
   </p>
 
-  <div class="grid sm:grid-cols-4 gap-3 mb-8">
+  <div class="grid sm:grid-cols-4 gap-3 mb-6">
+    <div class="card p-4">
+      <div class="metadata">Cost / maintenance</div>
+      <div class="text-2xl mt-1" style="font-family: var(--font-ui); font-weight: 800;">${{ "{:,.0f}".format(yearly_cost) }}</div>
+    </div>
     <div class="card p-4">
       <div class="metadata">Seats</div>
       <div class="text-2xl mt-1" style="font-family: var(--font-ui); font-weight: 800;">{{ seat_count }}</div>
     </div>
     <div class="card p-4">
-      <div class="metadata">Yearly cost</div>
-      <div class="text-2xl mt-1" style="font-family: var(--font-ui); font-weight: 800;">${{ "{:,.0f}".format(yearly_cost) }}</div>
+      <div class="metadata">License</div>
+      <div class="text-lg mt-1" style="font-family: var(--font-ui); font-weight: 700;">{{ software.license_type }}</div>
+      {% if per_seat is not none %}
+      <p class="text-xs mt-1" style="color: var(--text-muted);">${{ "{:,.2f}".format(per_seat) }} / seat</p>
+      {% endif %}
     </div>
     <div class="card p-4">
-      <div class="metadata">Per seat</div>
-      <div class="text-2xl mt-1" style="font-family: var(--font-ui); font-weight: 800;">
-        {% if per_seat is not none %}${{ "{:,.2f}".format(per_seat) }}{% else %}—{% endif %}
-      </div>
+      <div class="metadata">Publisher</div>
+      <div class="text-lg mt-1" style="font-family: var(--font-ui); font-weight: 700;">{{ software.publisher or "—" }}</div>
     </div>
-    <div class="card p-4">
-      <div class="metadata">Department</div>
-      <div class="text-lg mt-1" style="font-family: var(--font-ui); font-weight: 700;">{{ software.primary_department or "—" }}</div>
+  </div>
+
+  <div class="grid sm:grid-cols-2 gap-4 mb-6">
+    <div class="card p-4 text-sm space-y-2">
+      <div class="metadata mb-2">Support</div>
+      <p>
+        {% if software.support_link %}
+        <a href="{{ software.support_link }}" target="_blank" rel="noopener" style="color: var(--town-baltic-blue);">{{ software.support_link }}</a>
+        {% else %}—{% endif %}
+      </p>
+      <p>Email: {{ software.support_email or "—" }}</p>
+      <p>Phone: {{ software.support_phone or "—" }}</p>
+      <p>Hours: {{ software.support_hours or "—" }}</p>
+    </div>
+    <div class="card p-4 text-sm space-y-2">
+      <div class="metadata mb-2">Lifecycle &amp; data</div>
+      <p>Able to retire: {{ software.able_to_retire or "—" }}</p>
+      <p>Able to replace: {{ software.able_to_replace or "—" }}</p>
+      <p>Sensitive data: {{ software.sensitive_data or "—" }}</p>
+      {% if software.sensitive_data_details %}
+      <p style="color: var(--text-muted);">{{ software.sensitive_data_details }}</p>
+      {% endif %}
     </div>
   </div>
 

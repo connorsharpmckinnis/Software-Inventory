@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Preview — {{ target.label }}{% endblock %}
+{% block content %}
+  <p class="mb-3">
+    <a href="/admin/import/{{ target.key }}/map/{{ upload_id }}" class="btn btn-ghost" style="padding-left:0;">← Back to mapping</a>
+  </p>
+  <p class="metadata mb-1">Step 3 of 3</p>
+  <h1 class="text-3xl mb-2">Preview import</h1>
+  <p class="mb-6 text-sm" style="color: var(--text-muted);">
+    File <strong>{{ filename }}</strong> · {{ total_rows }} mapped row{{ 's' if total_rows != 1 else '' }}.
+    Valid rows will be upserted by employee ID.
+  </p>
+
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+    <div class="card p-4">
+      <div class="metadata">Valid</div>
+      <div class="text-2xl mt-1" style="font-family: var(--font-ui); font-weight: 800;">{{ preview.valid_rows|length }}</div>
+    </div>
+    <div class="card p-4">
+      <div class="metadata">New</div>
+      <div class="text-2xl mt-1" style="font-family: var(--font-ui); font-weight: 800;">{{ preview.insert_count }}</div>
+    </div>
+    <div class="card p-4">
+      <div class="metadata">Updates</div>
+      <div class="text-2xl mt-1" style="font-family: var(--font-ui); font-weight: 800;">{{ preview.update_count }}</div>
+    </div>
+    <div class="card p-4">
+      <div class="metadata">Issues</div>
+      <div class="text-2xl mt-1" style="font-family: var(--font-ui); font-weight: 800;">{{ preview.issues|length }}</div>
+    </div>
+  </div>
+
+  {% if preview.sample %}
+  <div class="card overflow-x-auto mb-6">
+    <div class="p-4 pb-0">
+      <h2 class="text-base">Sample mapped rows</h2>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          {% for f in target.fields %}
+          <th>{{ f.label }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in preview.sample %}
+        <tr>
+          {% for f in target.fields %}
+          <td>
+            {% if f.key == 'type' and row.get(f.key) %}
+            <span class="badge badge-type {% if row.get(f.key) == 'contractor' %}badge-type-contractor{% elif row.get(f.key) == 'employee' %}badge-type-employee{% endif %}">{{ row.get(f.key) }}</span>
+            {% elif f.key == 'status' and row.get(f.key) %}
+            <span class="badge {% if row.get(f.key) == 'active' %}badge-active{% else %}badge-inactive{% endif %}">{{ row.get(f.key) }}</span>
+            {% else %}
+            {{ row.get(f.key) or "—" }}
+            {% endif %}
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  {% if preview.warnings %}
+  <div class="card p-5 mb-6">
+    <h2 class="text-base mb-3">Warnings (rows still imported)</h2>
+    <ul class="text-sm space-y-1" style="color: var(--text-muted);">
+      {% for w in preview.warnings[:40] %}
+      <li>Row {{ w.row_number }}: {{ w.message }}</li>
+      {% endfor %}
+      {% if preview.warnings|length > 40 %}
+      <li>…and {{ preview.warnings|length - 40 }} more</li>
+      {% endif %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {% if preview.issues %}
+  <div class="card p-5 mb-6">
+    <h2 class="text-base mb-3">Validation issues (these rows will be skipped)</h2>
+    <ul class="text-sm space-y-1" style="color: var(--text-muted);">
+      {% for issue in preview.issues[:40] %}
+      <li>Row {{ issue.row_number }}: {{ issue.message }}</li>
+      {% endfor %}
+      {% if preview.issues|length > 40 %}
+      <li>…and {{ preview.issues|length - 40 }} more</li>
+      {% endif %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <form method="post" action="/admin/import/{{ target.key }}/commit/{{ upload_id }}" class="flex flex-wrap gap-2">
+    {% for f in target.fields %}
+    <input type="hidden" name="map_{{ f.key }}" value="{{ mapping.get(f.key, '') }}" />
+    {% endfor %}
+    <button type="submit" class="btn btn-primary" {% if not preview.valid_rows %}disabled{% endif %}>
+      Import {{ preview.valid_rows|length }} valid row{{ 's' if preview.valid_rows|length != 1 else '' }}
+    </button>
+    <a href="/admin/import/{{ target.key }}/map/{{ upload_id }}" class="btn btn-secondary">Edit mapping</a>
+  </form>
+{% endblock %}

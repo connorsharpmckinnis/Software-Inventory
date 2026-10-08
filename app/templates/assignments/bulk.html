@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+{% block title %}Bulk assign — Software Inventory{% endblock %}
+{% block content %}
+  <p class="mb-3"><a href="/assignments" class="btn btn-ghost" style="padding-left:0;">← Assignments</a></p>
+  <p class="metadata mb-1">CRUD</p>
+  <h1 class="text-3xl mb-2">Bulk assign</h1>
+  <p class="mb-6 text-sm" style="color: var(--text-muted);">
+    Pick one software title, select many people, then assign them all at once.
+    Selections stick when you change search/filters. Already-assigned people are marked and skipped if re-selected.
+  </p>
+
+  {% if error %}
+  <div class="flash flash-error">{{ error|replace('+', ' ') }}</div>
+  {% endif %}
+
+  <form method="get" action="/assignments/bulk" class="card p-4 mb-4" id="bulk-filter-form">
+    <div class="filter-bar">
+      <div class="grow">
+        <label class="field-label" for="software_id">Software</label>
+        <select class="field-select" id="software_id" name="software_id" required onchange="this.form.submit()">
+          <option value="">Select software…</option>
+          {% for s in software_opts %}
+          <option value="{{ s.id }}" {% if filters.software_id == (s.id|string) %}selected{% endif %}>
+            {{ s.name }} ({{ s.software_key }})
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="grow">
+        <label class="field-label" for="q">Search people</label>
+        <input class="field-input" id="q" name="q" value="{{ filters.q }}" placeholder="Name, email, ID…" />
+      </div>
+      <div>
+        <label class="field-label" for="department">Department</label>
+        <select class="field-select" id="department" name="department">
+          <option value="">All</option>
+          {% for d in options.departments %}
+          <option value="{{ d }}" {% if filters.department == d %}selected{% endif %}>{{ d }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="field-label" for="status">Status</label>
+        <select class="field-select" id="status" name="status">
+          <option value="">All</option>
+          {% for st in options.statuses %}
+          <option value="{{ st }}" {% if filters.status == st %}selected{% endif %}>{{ st }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="flex gap-2">
+        <button type="submit" class="btn btn-secondary">Filter</button>
+      </div>
+    </div>
+  </form>
+
+  {% if not filters.software_id %}
+  <div class="card p-5 text-sm" style="color: var(--text-muted);">
+    Select a software title above to load people and begin assigning.
+  </div>
+  {% else %}
+  <form method="post" action="/assignments/bulk" id="bulk-assign-form">
+    <input type="hidden" name="software_id" value="{{ filters.software_id }}" />
+    <div id="selected-ids"></div>
+
+    <div class="card p-4 mb-4 space-y-3">
+      <div class="flex flex-wrap items-end justify-between gap-3">
+        <div class="grow" style="min-width: 16rem;">
+          <label class="field-label" for="notes">Notes (optional, applied to new assignments)</label>
+          <input class="field-input" id="notes" name="notes" placeholder="e.g. FY26 rollout" />
+        </div>
+        <div class="flex flex-wrap gap-2 items-center">
+          <span class="text-sm" style="color: var(--text-muted);" id="selected-count">0 selected</span>
+          <button type="button" class="btn btn-secondary" id="select-visible">Select visible</button>
+          <button type="button" class="btn btn-secondary" id="clear-selection">Clear</button>
+          <button type="submit" class="btn btn-primary">Assign selected</button>
+        </div>
+      </div>
+      <div>
+        <div class="metadata mb-2">Selected (kept across filters)</div>
+        <div id="selected-chips" class="flex flex-wrap gap-2 text-sm" style="color: var(--text-muted);">
+          None yet — check people below.
+        </div>
+      </div>
+    </div>
+
+    <div class="card overflow-x-auto">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 2.5rem;"></th>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Department</th>
+            <th>Fund</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in people %}
+          {% set assigned = p.employee_id in already_assigned %}
+          <tr class="person-row" {% if assigned %}style="opacity: 0.65;"{% endif %}>
+            <td>
+              <input
+                type="checkbox"
+                class="person-check"
+                value="{{ p.employee_id }}"
+                data-label="{{ p.last_name }}, {{ p.first_name }}"
+                {% if assigned %}title="Already assigned — will be skipped"{% endif %}
+              />
+            </td>
+            <td>{{ p.employee_id }}</td>
+            <td>{{ p.last_name }}, {{ p.first_name }}</td>
+            <td>
+              {% set ptype = p.type or 'employee' %}
+              <span class="badge badge-type {% if ptype == 'contractor' %}badge-type-contractor{% elif ptype == 'employee' %}badge-type-employee{% endif %}">{{ ptype }}</span>
+            </td>
+            <td>{{ p.department_name or "—" }}</td>
+            <td>{{ p.fund_code }} — {{ p.fund_label }}</td>
+            <td>
+              <span class="badge {% if p.status == 'active' %}badge-active{% else %}badge-inactive{% endif %}">{{ p.status }}</span>
+              {% if assigned %}<span class="badge badge-no" style="margin-left: 0.25rem;">Assigned</span>{% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="7" style="color: var(--text-muted);">No people matched these filters.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </form>
+
+  <script>
+    (function () {
+      const softwareId = "{{ filters.software_id }}";
+      const storageKey = "bulk-assign-selected:" + softwareId;
+      const countEl = document.getElementById("selected-count");
+      const chipsEl = document.getElementById("selected-chips");
+      const idsEl = document.getElementById("selected-ids");
+
+      /** @type {Map<string, string>} id -> label */
+      let selected = new Map();
+
+      function load() {
+        try {
+          const raw = sessionStorage.getItem(storageKey);
+          if (!raw) return new Map();
+          const entries = JSON.parse(raw);
+          return new Map(Array.isArray(entries) ? entries : []);
+        } catch (_) {
+          return new Map();
+        }
+      }
+
+      function save() {
+        sessionStorage.setItem(storageKey, JSON.stringify(Array.from(selected.entries())));
+      }
+
+      function checks() {
+        return Array.from(document.querySelectorAll(".person-check"));
+      }
+
+      function syncDom() {
+        // Restore checkbox state for visible rows
+        checks().forEach((c) => {
+          c.checked = selected.has(c.value);
+        });
+
+        // Hidden inputs for POST (all selected, including filtered-out people)
+        idsEl.innerHTML = "";
+        selected.forEach((_label, id) => {
+          const input = document.createElement("input");
+          input.type = "hidden";
+          input.name = "person_ids";
+          input.value = id;
+          idsEl.appendChild(input);
+        });
+
+        const n = selected.size;
+        countEl.textContent = n + " selected";
+
+        if (n === 0) {
+          chipsEl.innerHTML = "None yet — check people below.";
+          chipsEl.style.color = "var(--text-muted)";
+          return;
+        }
+
+        chipsEl.style.color = "";
+        chipsEl.innerHTML = "";
+        // Stable display order by label
+        Array.from(selected.entries())
+          .sort((a, b) => a[1].localeCompare(b[1]))
+          .forEach(([id, label]) => {
+            const chip = document.createElement("span");
+            chip.className = "badge badge-type badge-type-employee";
+            chip.style.cssText = "display:inline-flex;align-items:center;gap:0.35rem;text-transform:none;letter-spacing:0;font-size:0.75rem;";
+            chip.appendChild(document.createTextNode(label + " (" + id + ")"));
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.setAttribute("aria-label", "Remove " + label);
+            btn.textContent = "×";
+            btn.style.cssText = "border:none;background:transparent;cursor:pointer;font-size:1rem;line-height:1;padding:0;color:inherit;";
+            btn.addEventListener("click", () => {
+              selected.delete(id);
+              save();
+              syncDom();
+            });
+            chip.appendChild(btn);
+            chipsEl.appendChild(chip);
+          });
+      }
+
+      selected = load();
+      // Refresh labels from visible rows when available
+      checks().forEach((c) => {
+        if (selected.has(c.value)) {
+          selected.set(c.value, c.dataset.label || selected.get(c.value) || c.value);
+        }
+      });
+      save();
+      syncDom();
+
+      document.getElementById("bulk-assign-form").addEventListener("change", (e) => {
+        const t = e.target;
+        if (!t.classList || !t.classList.contains("person-check")) return;
+        if (t.checked) {
+          selected.set(t.value, t.dataset.label || t.value);
+        } else {
+          selected.delete(t.value);
+        }
+        save();
+        syncDom();
+      });
+
+      document.getElementById("select-visible").addEventListener("click", () => {
+        checks().forEach((c) => {
+          selected.set(c.value, c.dataset.label || c.value);
+        });
+        save();
+        syncDom();
+      });
+
+      document.getElementById("clear-selection").addEventListener("click", () => {
+        selected.clear();
+        save();
+        syncDom();
+      });
+
+      // Clear stored selection after a successful assign navigation isn't needed
+      // (we leave the page). Clear when software changes is handled by storage key.
+    })();
+  </script>
+  {% endif %}
+{% endblock %}

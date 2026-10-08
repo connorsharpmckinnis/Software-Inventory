@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Import {{ target.label }} — Software Inventory{% endblock %}
+{% block content %}
+  <p class="mb-3"><a href="/admin/import" class="btn btn-ghost" style="padding-left:0;">← Bulk import</a></p>
+  <p class="metadata mb-1">Step 1 of 3</p>
+  <h1 class="text-3xl mb-2">Upload CSV — {{ target.label }}</h1>
+  <p class="mb-6 text-sm" style="color: var(--text-muted);">{{ target.description }}</p>
+
+  {% if flash %}
+  <div class="flash">{{ flash|replace('+', ' ') }}</div>
+  {% endif %}
+  {% if error %}
+  <div class="flash flash-error">{{ error|replace('+', ' ') }}</div>
+  {% endif %}
+
+  <form method="post" action="/admin/import/{{ target.key }}/upload" enctype="multipart/form-data" class="card p-5 max-w-xl space-y-4">
+    <div>
+      <label class="field-label" for="file">CSV file</label>
+      <input class="field-input" type="file" id="file" name="file" accept=".csv,text/csv" required />
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <button type="submit" class="btn btn-primary">Continue to field mapping</button>
+      <a href="/admin/import" class="btn btn-secondary">Cancel</a>
+    </div>
+  </form>
+{% endblock %}

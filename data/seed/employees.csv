@@ -1,6 +1,6 @@
-employee_id,first_name,last_name,department_name,fund_code,fund_label,status,email
-E1001,David,Epley,Information Technology,1010,IT Administration,active,david.epley@apexnc.example
-E1002,Connor,McKinnis,Information Technology,1015,IT Innovations,active,connor.mckinnis@apexnc.example
-E1003,Sam,Patel,Public Works,4055,Utilities Administration,active,sam.patel@apexnc.example
-E1004,Alex,Rivera,Communications,1520,Communications & Outreach,active,alex.rivera@apexnc.example
-E1005,Jordan,Lee,Public Works,4060,Utilities Meter Services,active,jordan.lee@apexnc.example
+employee_id,first_name,last_name,department_name,fund_code,fund_label,status,email,type
+E1001,David,Epley,Information Technology,1010,IT Administration,active,david.epley@apexnc.example,employee
+E1002,Connor,McKinnis,Information Technology,1015,IT Innovations,active,connor.mckinnis@apexnc.example,employee
+E1003,Sam,Patel,Public Works,4055,Utilities Administration,active,sam.patel@apexnc.example,employee
+E1004,Alex,Rivera,Communications,1520,Communications & Outreach,active,alex.rivera@apexnc.example,employee
+E1005,Jordan,Lee,Public Works,4060,Utilities Meter Services,active,jordan.lee@apexnc.example,contractor

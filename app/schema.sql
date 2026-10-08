@@ -15,7 +15,8 @@ CREATE TABLE IF NOT EXISTS person (
     department_name TEXT,
     fund_code TEXT NOT NULL REFERENCES fund(code),
     email TEXT,
-    status TEXT DEFAULT 'active'
+    status TEXT DEFAULT 'active',
+    type TEXT DEFAULT 'employee'
 );
 
 CREATE TABLE IF NOT EXISTS software (
@@ -32,7 +33,19 @@ CREATE TABLE IF NOT EXISTS software (
     owner_name TEXT,
     is_contract INTEGER NOT NULL DEFAULT 0,
     status TEXT DEFAULT 'active',
-    notes TEXT
+    notes TEXT,
+    -- Town inventory sheet fields (David export)
+    users TEXT,
+    external_use INTEGER NOT NULL DEFAULT 0,
+    external_facing INTEGER NOT NULL DEFAULT 0,
+    support_link TEXT,
+    support_email TEXT,
+    support_phone TEXT,
+    support_hours TEXT,
+    able_to_retire TEXT,
+    able_to_replace TEXT,
+    sensitive_data TEXT,
+    sensitive_data_details TEXT
 );
 
 CREATE TABLE IF NOT EXISTS assignment (

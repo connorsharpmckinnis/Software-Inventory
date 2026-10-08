@@ -9,93 +9,164 @@
   <div class="flash flash-error">{{ error|replace('+', ' ') }}</div>
   {% endif %}
 
-  <form method="post" action="{% if mode == 'create' %}/software/new{% else %}/software/{{ software.software_key }}/edit{% endif %}" class="card p-5 max-w-2xl space-y-4">
-    <div class="grid sm:grid-cols-2 gap-4">
-      <div>
-        <label class="field-label" for="software_key">Software key</label>
-        {% if mode == 'create' %}
-        <input class="field-input" id="software_key" name="software_key" value="{{ form.software_key }}" required placeholder="e.g. adobe-cc" />
-        <p class="text-xs mt-1" style="color: var(--text-muted);">Stable id — locked after create.</p>
-        {% else %}
-        <input class="field-input" id="software_key" value="{{ form.software_key }}" disabled />
-        <p class="text-xs mt-1" style="color: var(--text-muted);">Key cannot be changed after create.</p>
-        {% endif %}
-      </div>
-      <div>
-        <label class="field-label" for="name">Name</label>
-        <input class="field-input" id="name" name="name" value="{{ form.name }}" required />
-      </div>
-    </div>
-
-    <div class="grid sm:grid-cols-2 gap-4">
-      <div>
-        <label class="field-label" for="publisher">Publisher</label>
-        <input class="field-input" id="publisher" name="publisher" value="{{ form.publisher }}" />
-      </div>
-      <div>
-        <label class="field-label" for="license_type">License type</label>
-        <select class="field-select" id="license_type" name="license_type">
-          {% for lt in license_choices %}
-          <option value="{{ lt }}" {% if form.license_type == lt %}selected{% endif %}>{{ lt }}</option>
-          {% endfor %}
-        </select>
-      </div>
-    </div>
-
-    <div class="grid sm:grid-cols-2 gap-4">
-      <div>
-        <label class="field-label" for="seat_count">Seat count</label>
-        <input class="field-input" id="seat_count" name="seat_count" type="number" min="0" step="1" value="{{ form.seat_count }}" />
-      </div>
-      <div>
-        <label class="field-label" for="yearly_cost">Yearly cost ($)</label>
-        <input class="field-input" id="yearly_cost" name="yearly_cost" type="number" min="0" step="0.01" value="{{ form.yearly_cost }}" />
-      </div>
-    </div>
-
-    <div class="grid sm:grid-cols-2 gap-4">
-      <div>
-        <label class="field-label" for="primary_department">Primary department</label>
-        <input class="field-input" id="primary_department" name="primary_department" list="dept-list" value="{{ form.primary_department }}" />
-        <datalist id="dept-list">
-          {% for d in departments %}
-          <option value="{{ d }}"></option>
-          {% endfor %}
-        </datalist>
-      </div>
-      <div>
-        <label class="field-label" for="status">Status</label>
-        <select class="field-select" id="status" name="status">
-          {% for st in ["active", "inactive", "retired"] %}
-          <option value="{{ st }}" {% if form.status == st %}selected{% endif %}>{{ st }}</option>
-          {% endfor %}
-        </select>
-      </div>
-    </div>
-
-    <div class="grid sm:grid-cols-2 gap-4">
-      <div>
-        <label class="field-label" for="owner_employee_id">Owner (employee)</label>
-        <select class="field-select" id="owner_employee_id" name="owner_employee_id">
-          <option value="">— none —</option>
-          {% for p in people %}
-          <option value="{{ p.employee_id }}" {% if form.owner_employee_id == p.employee_id %}selected{% endif %}>
-            {{ p.last_name }}, {{ p.first_name }} ({{ p.employee_id }})
-          </option>
-          {% endfor %}
-        </select>
-      </div>
-      <div>
-        <label class="field-label" for="owner_name">Owner name (display)</label>
-        <input class="field-input" id="owner_name" name="owner_name" value="{{ form.owner_name }}" />
+  <form method="post" action="{% if mode == 'create' %}/software/new{% else %}/software/{{ software.software_key }}/edit{% endif %}" class="card p-5 max-w-3xl space-y-5">
+    <div>
+      <h2 class="text-base mb-3">Application</h2>
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div>
+          <label class="field-label" for="software_key">Software key</label>
+          {% if mode == 'create' %}
+          <input class="field-input" id="software_key" name="software_key" value="{{ form.software_key }}" placeholder="auto from name if blank" />
+          <p class="text-xs mt-1" style="color: var(--text-muted);">Optional — generated from name when empty. Locked after create.</p>
+          {% else %}
+          <input class="field-input" id="software_key" value="{{ form.software_key }}" disabled />
+          <p class="text-xs mt-1" style="color: var(--text-muted);">Key cannot be changed after create.</p>
+          {% endif %}
+        </div>
+        <div>
+          <label class="field-label" for="name">Application / name</label>
+          <input class="field-input" id="name" name="name" value="{{ form.name }}" required />
+        </div>
       </div>
     </div>
 
     <div>
-      <label class="inline-flex items-center gap-2 text-sm font-semibold">
-        <input type="checkbox" name="is_contract" value="1" {% if form.is_contract %}checked{% endif %} />
-        Contract / formal agreement
-      </label>
+      <h2 class="text-base mb-3">Ownership</h2>
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div>
+          <label class="field-label" for="primary_department">Department</label>
+          <input class="field-input" id="primary_department" name="primary_department" list="dept-list" value="{{ form.primary_department }}" />
+          <datalist id="dept-list">
+            {% for d in departments %}
+            <option value="{{ d }}"></option>
+            {% endfor %}
+          </datalist>
+        </div>
+        <div>
+          <label class="field-label" for="owner_name">Owner</label>
+          <input class="field-input" id="owner_name" name="owner_name" value="{{ form.owner_name }}" placeholder="Dept or team name" />
+        </div>
+        <div>
+          <label class="field-label" for="users">Users</label>
+          <input class="field-input" id="users" name="users" value="{{ form.users }}" placeholder="e.g. Various, Clerk" />
+        </div>
+        <div>
+          <label class="field-label" for="owner_employee_id">Owner (employee ID)</label>
+          <select class="field-select" id="owner_employee_id" name="owner_employee_id">
+            <option value="">— none —</option>
+            {% for p in people %}
+            <option value="{{ p.employee_id }}" {% if form.owner_employee_id == p.employee_id %}selected{% endif %}>
+              {{ p.last_name }}, {{ p.first_name }} ({{ p.employee_id }})
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="text-base mb-3">Access &amp; classification</h2>
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div class="space-y-2">
+          <label class="inline-flex items-center gap-2 text-sm font-semibold">
+            <input type="checkbox" name="external_use" value="1" {% if form.external_use %}checked{% endif %} />
+            External use
+          </label>
+          <label class="inline-flex items-center gap-2 text-sm font-semibold">
+            <input type="checkbox" name="external_facing" value="1" {% if form.external_facing %}checked{% endif %} />
+            External facing
+          </label>
+          <label class="inline-flex items-center gap-2 text-sm font-semibold">
+            <input type="checkbox" name="is_contract" value="1" {% if form.is_contract %}checked{% endif %} />
+            Contract / formal agreement
+          </label>
+        </div>
+        <div class="grid gap-4">
+          <div>
+            <label class="field-label" for="able_to_retire">Able to retire</label>
+            <input class="field-input" id="able_to_retire" name="able_to_retire" value="{{ form.able_to_retire }}" />
+          </div>
+          <div>
+            <label class="field-label" for="able_to_replace">Able to replace</label>
+            <input class="field-input" id="able_to_replace" name="able_to_replace" value="{{ form.able_to_replace }}" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="text-base mb-3">Cost &amp; licensing</h2>
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div>
+          <label class="field-label" for="yearly_cost">Cost or maintenance ($)</label>
+          <input class="field-input" id="yearly_cost" name="yearly_cost" value="{{ form.yearly_cost }}" />
+        </div>
+        <div>
+          <label class="field-label" for="seat_count">Seat count</label>
+          <input class="field-input" id="seat_count" name="seat_count" type="number" min="0" step="1" value="{{ form.seat_count }}" />
+        </div>
+        <div>
+          <label class="field-label" for="license_type">License type</label>
+          <select class="field-select" id="license_type" name="license_type">
+            {% for lt in license_choices %}
+            <option value="{{ lt }}" {% if form.license_type == lt %}selected{% endif %}>{{ lt }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="field-label" for="publisher">Publisher</label>
+          <input class="field-input" id="publisher" name="publisher" value="{{ form.publisher }}" />
+        </div>
+        <div>
+          <label class="field-label" for="status">Status</label>
+          <select class="field-select" id="status" name="status">
+            {% for st in ["active", "inactive", "retired"] %}
+            <option value="{{ st }}" {% if form.status == st %}selected{% endif %}>{{ st }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="text-base mb-3">Support</h2>
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div class="sm:col-span-2">
+          <label class="field-label" for="support_link">Support link</label>
+          <input class="field-input" id="support_link" name="support_link" value="{{ form.support_link }}" placeholder="https://…" />
+        </div>
+        <div>
+          <label class="field-label" for="support_email">Support email</label>
+          <input class="field-input" id="support_email" name="support_email" type="email" value="{{ form.support_email }}" />
+        </div>
+        <div>
+          <label class="field-label" for="support_phone">Support phone</label>
+          <input class="field-input" id="support_phone" name="support_phone" value="{{ form.support_phone }}" />
+        </div>
+        <div class="sm:col-span-2">
+          <label class="field-label" for="support_hours">Support hours</label>
+          <input class="field-input" id="support_hours" name="support_hours" value="{{ form.support_hours }}" />
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="text-base mb-3">Sensitive data</h2>
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div>
+          <label class="field-label" for="sensitive_data">Sensitive data</label>
+          <input class="field-input" id="sensitive_data" name="sensitive_data" value="{{ form.sensitive_data }}" placeholder="Yes / Investigate / blank" list="sensitive-list" />
+          <datalist id="sensitive-list">
+            <option value="Yes"></option>
+            <option value="Investigate"></option>
+            <option value="No"></option>
+          </datalist>
+        </div>
+        <div class="sm:col-span-2">
+          <label class="field-label" for="sensitive_data_details">Sensitive data details</label>
+          <textarea class="field-textarea" id="sensitive_data_details" name="sensitive_data_details" rows="2">{{ form.sensitive_data_details }}</textarea>
+        </div>
+      </div>
     </div>
 
     <div>

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Map fields — {{ target.label }}{% endblock %}
+{% block content %}
+  <p class="mb-3"><a href="/admin/import/{{ target.key }}" class="btn btn-ghost" style="padding-left:0;">← Upload again</a></p>
+  <p class="metadata mb-1">Step 2 of 3</p>
+  <h1 class="text-3xl mb-2">Map fields</h1>
+  <p class="mb-2 text-sm" style="color: var(--text-muted);">
+    File <strong>{{ filename }}</strong> · {{ row_count }} data row{{ 's' if row_count != 1 else '' }}.
+    Choose which CSV column fills each app field. Required fields are marked.
+  </p>
+
+  {% if error %}
+  <div class="flash flash-error">{{ error|replace('+', ' ') }}</div>
+  {% endif %}
+
+  <form method="post" action="/admin/import/{{ target.key }}/preview/{{ upload_id }}" class="space-y-6">
+    <div class="card overflow-x-auto">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>App field</th>
+            <th>CSV column</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in target.fields %}
+          <tr>
+            <td>
+              <span style="font-weight: 600;">{{ f.label }}</span>
+              {% if f.required %}<span class="badge badge-inactive" style="margin-left: 0.35rem;">Required</span>{% endif %}
+              <div class="text-xs mt-0.5" style="color: var(--text-muted);"><code>{{ f.key }}</code></div>
+            </td>
+            <td>
+              <select class="field-select" name="map_{{ f.key }}" id="map_{{ f.key }}">
+                <option value="">— Skip / use default —</option>
+                {% for h in headers %}
+                <option value="{{ h }}" {% if mapping.get(f.key) == h %}selected{% endif %}>{{ h }}</option>
+                {% endfor %}
+              </select>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if sample_rows %}
+    <div class="card p-5">
+      <h2 class="text-base mb-3">CSV sample (first {{ sample_rows|length }} row{{ 's' if sample_rows|length != 1 else '' }})</h2>
+      <div class="overflow-x-auto">
+        <table class="data-table">
+          <thead>
+            <tr>
+              {% for h in headers %}
+              <th>{{ h }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in sample_rows %}
+            <tr>
+              {% for h in headers %}
+              <td>{{ row.get(h) or "" }}</td>
+              {% endfor %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="flex flex-wrap gap-2">
+      <button type="submit" class="btn btn-primary">Preview import</button>
+      <a href="/admin/import/{{ target.key }}" class="btn btn-secondary">Cancel</a>
+    </div>
+  </form>
+{% endblock %}

@@ -102,7 +102,7 @@ def admin_export_csv_zip() -> Response:
                 """
                 SELECT
                     p.employee_id, p.first_name, p.last_name, p.department_name,
-                    p.fund_code, f.label AS fund_label, p.status, p.email
+                    p.fund_code, f.label AS fund_label, p.status, p.email, p.type
                 FROM person p
                 JOIN fund f ON f.code = p.fund_code
                 ORDER BY p.last_name COLLATE NOCASE, p.first_name COLLATE NOCASE
@@ -117,7 +117,13 @@ def admin_export_csv_zip() -> Response:
                     s.seat_count, s.yearly_cost,
                     CASE WHEN s.is_contract = 1 THEN 'yes' ELSE 'no' END AS is_contract,
                     s.primary_department, s.owner_employee_id, s.owner_name,
-                    s.status, s.notes
+                    s.status, s.notes,
+                    s.users,
+                    CASE WHEN s.external_use = 1 THEN 'yes' ELSE 'no' END AS external_use,
+                    CASE WHEN s.external_facing = 1 THEN 'yes' ELSE 'no' END AS external_facing,
+                    s.support_link, s.support_email, s.support_phone, s.support_hours,
+                    s.able_to_retire, s.able_to_replace,
+                    s.sensitive_data, s.sensitive_data_details
                 FROM software s
                 ORDER BY s.name COLLATE NOCASE
                 """
@@ -155,6 +161,7 @@ def admin_export_csv_zip() -> Response:
                 "fund_label",
                 "status",
                 "email",
+                "type",
             ],
             [
                 [
@@ -166,6 +173,7 @@ def admin_export_csv_zip() -> Response:
                     r["fund_label"],
                     r["status"] or "",
                     r["email"] or "",
+                    r["type"] or "employee",
                 ]
                 for r in people
             ],
@@ -184,6 +192,17 @@ def admin_export_csv_zip() -> Response:
                 "owner_name",
                 "status",
                 "notes",
+                "users",
+                "external_use",
+                "external_facing",
+                "support_link",
+                "support_email",
+                "support_phone",
+                "support_hours",
+                "able_to_retire",
+                "able_to_replace",
+                "sensitive_data",
+                "sensitive_data_details",
             ],
             [
                 [
@@ -199,6 +218,17 @@ def admin_export_csv_zip() -> Response:
                     r["owner_name"] or "",
                     r["status"] or "",
                     r["notes"] or "",
+                    r["users"] or "",
+                    r["external_use"],
+                    r["external_facing"],
+                    r["support_link"] or "",
+                    r["support_email"] or "",
+                    r["support_phone"] or "",
+                    r["support_hours"] or "",
+                    r["able_to_retire"] or "",
+                    r["able_to_replace"] or "",
+                    r["sensitive_data"] or "",
+                    r["sensitive_data_details"] or "",
                 ]
                 for r in software
             ],

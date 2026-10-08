@@ -5,6 +5,8 @@ No pools: seats and yearly cost live on the software row itself.
 
 from __future__ import annotations
 
+import re
+
 from fastapi import APIRouter, Form, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -18,8 +20,34 @@ templates = Jinja2Templates(directory="app/templates")
 
 LICENSE_CHOICES = list(queries.LICENSE_TYPES)
 
+_EMPTY_FORM = {
+    "software_key": "",
+    "name": "",
+    "publisher": "",
+    "license_type": "unknown",
+    "primary_department": "",
+    "owner_employee_id": "",
+    "owner_name": "",
+    "is_contract": False,
+    "status": "active",
+    "notes": "",
+    "seat_count": "0",
+    "yearly_cost": "0",
+    "users": "",
+    "external_use": False,
+    "external_facing": False,
+    "support_link": "",
+    "support_email": "",
+    "support_phone": "",
+    "support_hours": "",
+    "able_to_retire": "",
+    "able_to_replace": "",
+    "sensitive_data": "",
+    "sensitive_data_details": "",
+}
 
-def _parse_bool_contract(value: str | None) -> bool:
+
+def _parse_bool_flag(value: str | None) -> bool:
     return (value or "").strip().lower() in {"1", "yes", "true", "on", "y"}
 
 
@@ -34,13 +62,41 @@ def _int_default(value: str | None, default: int = 0) -> int:
 
 
 def _float_default(value: str | None, default: float = 0.0) -> float:
-    raw = (value or "").strip()
+    raw = re.sub(r"[^\d.\-]", "", (value or "").strip())
     if raw == "":
         return default
     try:
         return float(raw)
     except ValueError:
         return default
+
+
+def _form_from_software(soft) -> dict:
+    return {
+        "software_key": soft["software_key"],
+        "name": soft["name"],
+        "publisher": soft["publisher"] or "",
+        "license_type": soft["license_type"],
+        "primary_department": soft["primary_department"] or "",
+        "owner_employee_id": soft["owner_employee_id"] or "",
+        "owner_name": soft["owner_name"] or "",
+        "is_contract": bool(soft["is_contract"]),
+        "status": soft["status"] or "active",
+        "notes": soft["notes"] or "",
+        "seat_count": str(soft["seat_count"]),
+        "yearly_cost": str(soft["yearly_cost"]),
+        "users": soft["users"] or "",
+        "external_use": bool(soft["external_use"]),
+        "external_facing": bool(soft["external_facing"]),
+        "support_link": soft["support_link"] or "",
+        "support_email": soft["support_email"] or "",
+        "support_phone": soft["support_phone"] or "",
+        "support_hours": soft["support_hours"] or "",
+        "able_to_retire": soft["able_to_retire"] or "",
+        "able_to_replace": soft["able_to_replace"] or "",
+        "sensitive_data": soft["sensitive_data"] or "",
+        "sensitive_data_details": soft["sensitive_data_details"] or "",
+    }
 
 
 @router.get("", response_class=HTMLResponse)
@@ -111,20 +167,7 @@ def software_new(request: Request, error: str | None = None) -> HTMLResponse:
             "people": people,
             "license_choices": LICENSE_CHOICES,
             "departments": options["departments"],
-            "form": {
-                "software_key": "",
-                "name": "",
-                "publisher": "",
-                "license_type": "per-seat",
-                "primary_department": "",
-                "owner_employee_id": "",
-                "owner_name": "",
-                "is_contract": False,
-                "status": "active",
-                "notes": "",
-                "seat_count": "0",
-                "yearly_cost": "0",
-            },
+            "form": dict(_EMPTY_FORM),
             "error": error,
         },
     )
@@ -132,7 +175,7 @@ def software_new(request: Request, error: str | None = None) -> HTMLResponse:
 
 @router.post("/new")
 def software_create(
-    software_key: str = Form(...),
+    software_key: str = Form(""),
     name: str = Form(...),
     publisher: str = Form(""),
     license_type: str = Form("unknown"),
@@ -144,6 +187,17 @@ def software_create(
     notes: str = Form(""),
     seat_count: str = Form("0"),
     yearly_cost: str = Form("0"),
+    users: str = Form(""),
+    external_use: str = Form(""),
+    external_facing: str = Form(""),
+    support_link: str = Form(""),
+    support_email: str = Form(""),
+    support_phone: str = Form(""),
+    support_hours: str = Form(""),
+    able_to_retire: str = Form(""),
+    able_to_replace: str = Form(""),
+    sensitive_data: str = Form(""),
+    sensitive_data_details: str = Form(""),
 ) -> RedirectResponse:
     conn = connect()
     try:
@@ -157,11 +211,22 @@ def software_create(
                 primary_department=primary_department,
                 owner_employee_id=owner_employee_id,
                 owner_name=owner_name,
-                is_contract=_parse_bool_contract(is_contract),
+                is_contract=_parse_bool_flag(is_contract),
                 status=status,
                 notes=notes,
                 seat_count=_int_default(seat_count, 0),
                 yearly_cost=_float_default(yearly_cost, 0.0),
+                users=users,
+                external_use=_parse_bool_flag(external_use),
+                external_facing=_parse_bool_flag(external_facing),
+                support_link=support_link,
+                support_email=support_email,
+                support_phone=support_phone,
+                support_hours=support_hours,
+                able_to_retire=able_to_retire,
+                able_to_replace=able_to_replace,
+                sensitive_data=sensitive_data,
+                sensitive_data_details=sensitive_data_details,
             )
             soft = queries.get_software(conn, str(sid))
         except Exception as exc:
@@ -209,20 +274,7 @@ def software_edit(
             "people": people,
             "license_choices": LICENSE_CHOICES,
             "departments": options["departments"],
-            "form": {
-                "software_key": soft["software_key"],
-                "name": soft["name"],
-                "publisher": soft["publisher"] or "",
-                "license_type": soft["license_type"],
-                "primary_department": soft["primary_department"] or "",
-                "owner_employee_id": soft["owner_employee_id"] or "",
-                "owner_name": soft["owner_name"] or "",
-                "is_contract": bool(soft["is_contract"]),
-                "status": soft["status"] or "active",
-                "notes": soft["notes"] or "",
-                "seat_count": str(soft["seat_count"]),
-                "yearly_cost": str(soft["yearly_cost"]),
-            },
+            "form": _form_from_software(soft),
             "error": error,
         },
     )
@@ -242,6 +294,17 @@ def software_update(
     notes: str = Form(""),
     seat_count: str = Form("0"),
     yearly_cost: str = Form("0"),
+    users: str = Form(""),
+    external_use: str = Form(""),
+    external_facing: str = Form(""),
+    support_link: str = Form(""),
+    support_email: str = Form(""),
+    support_phone: str = Form(""),
+    support_hours: str = Form(""),
+    able_to_retire: str = Form(""),
+    able_to_replace: str = Form(""),
+    sensitive_data: str = Form(""),
+    sensitive_data_details: str = Form(""),
 ) -> RedirectResponse:
     conn = connect()
     try:
@@ -261,11 +324,22 @@ def software_update(
                 primary_department=primary_department,
                 owner_employee_id=owner_employee_id,
                 owner_name=owner_name,
-                is_contract=_parse_bool_contract(is_contract),
+                is_contract=_parse_bool_flag(is_contract),
                 status=status,
                 notes=notes,
                 seat_count=_int_default(seat_count, 0),
                 yearly_cost=_float_default(yearly_cost, 0.0),
+                users=users,
+                external_use=_parse_bool_flag(external_use),
+                external_facing=_parse_bool_flag(external_facing),
+                support_link=support_link,
+                support_email=support_email,
+                support_phone=support_phone,
+                support_hours=support_hours,
+                able_to_retire=able_to_retire,
+                able_to_replace=able_to_replace,
+                sensitive_data=sensitive_data,
+                sensitive_data_details=sensitive_data_details,
             )
         except Exception as exc:
             msg = str(exc).replace(" ", "+")[:160]

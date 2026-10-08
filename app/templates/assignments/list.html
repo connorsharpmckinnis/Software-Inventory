@@ -6,7 +6,10 @@
       <p class="metadata mb-1">CRUD</p>
       <h1 class="text-3xl">Assignments</h1>
     </div>
-    <a href="/assignments/new" class="btn btn-primary">New assignment</a>
+    <div class="flex flex-wrap gap-2">
+      <a href="/assignments/bulk" class="btn btn-secondary">Bulk assign</a>
+      <a href="/assignments/new" class="btn btn-primary">New assignment</a>
+    </div>
   </div>
 
   {% if flash %}

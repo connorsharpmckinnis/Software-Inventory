@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from app.db import connect, init_schema, is_db_empty
-from app.routers import assignments, health, pages, people, reports, software
+from app.routers import assignments, bulk_import, health, pages, people, reports, software
 from app.seed import import_seed
 
 
@@ -35,6 +35,7 @@ app = FastAPI(
 )
 
 app.include_router(health.router)
+app.include_router(bulk_import.router)
 app.include_router(pages.router)
 app.include_router(reports.router)
 app.include_router(software.router)

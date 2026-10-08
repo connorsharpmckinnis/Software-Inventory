@@ -5,6 +5,9 @@
   <p class="metadata mb-1">{{ person.employee_id }}</p>
   <h1 class="text-3xl mb-1">{{ person.first_name }} {{ person.last_name }}</h1>
   <p class="mb-6 text-sm" style="color: var(--text-muted);">
+    {% set ptype = person.type or 'employee' %}
+    <span class="badge badge-type {% if ptype == 'contractor' %}badge-type-contractor{% elif ptype == 'employee' %}badge-type-employee{% endif %}">{{ ptype }}</span>
+    ·
     {{ person.department_name or "No department" }}
     ·
     <span class="badge {% if person.status == 'active' %}badge-active{% else %}badge-inactive{% endif %}">{{ person.status }}</span>

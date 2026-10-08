@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Bulk import — Software Inventory{% endblock %}
+{% block content %}
+  <p class="mb-3"><a href="/admin" class="btn btn-ghost" style="padding-left:0;">← Admin</a></p>
+  <p class="metadata mb-1">Maintenance</p>
+  <h1 class="text-3xl mb-2">Bulk import</h1>
+  <p class="mb-6 text-sm" style="color: var(--text-muted);">
+    Upload a CSV, map columns to app fields, preview, then upsert.
+    Field aliases can be adjusted later when export headers change.
+  </p>
+
+  {% if flash %}
+  <div class="flash">{{ flash|replace('+', ' ') }}</div>
+  {% endif %}
+  {% if error %}
+  <div class="flash flash-error">{{ error|replace('+', ' ') }}</div>
+  {% endif %}
+
+  <div class="grid sm:grid-cols-2 gap-4">
+    {% for t in targets %}
+    <div class="card p-5 space-y-3">
+      <h2 class="text-lg">{{ t.label }}</h2>
+      <p class="text-sm" style="color: var(--text-muted);">{{ t.description }}</p>
+      <a class="btn btn-primary" href="/admin/import/{{ t.key }}">Import {{ t.label }}</a>
+    </div>
+    {% endfor %}
+  </div>
+{% endblock %}

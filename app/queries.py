@@ -6,6 +6,7 @@ seat_count + yearly_cost. Assignments link person ↔ software only.
 
 from __future__ import annotations
 
+import re
 import sqlite3
 from typing import Any
 
@@ -390,6 +391,44 @@ def create_assignment(
     return int(cur.lastrowid)
 
 
+def bulk_create_assignments(
+    conn: sqlite3.Connection,
+    *,
+    software_id: int,
+    person_ids: list[str],
+    notes: str | None = None,
+) -> dict[str, int]:
+    """Assign one software title to many people. Skips existing pairs.
+
+    Returns counts: created, skipped (already assigned), invalid (unknown person).
+    """
+    created = 0
+    skipped = 0
+    invalid = 0
+    note = (notes or "").strip() or None
+    for raw_id in person_ids:
+        person_id = (raw_id or "").strip()
+        if not person_id:
+            continue
+        if get_person(conn, person_id) is None:
+            invalid += 1
+            continue
+        cur = conn.execute(
+            """
+            INSERT INTO assignment (software_id, person_id, assigned_on, notes)
+            VALUES (?, ?, date('now'), ?)
+            ON CONFLICT(software_id, person_id) DO NOTHING
+            """,
+            (software_id, person_id, note),
+        )
+        if cur.rowcount:
+            created += 1
+        else:
+            skipped += 1
+    conn.commit()
+    return {"created": created, "skipped": skipped, "invalid": invalid}
+
+
 def update_assignment(
     conn: sqlite3.Connection,
     assignment_id: int,
@@ -448,6 +487,47 @@ def _normalize_license_type(value: str | None) -> str:
     return lt if lt in LICENSE_TYPES else "unknown"
 
 
+def slugify_software_key(value: str) -> str:
+    """Lowercase slug suitable for software_key / URLs."""
+    slug = re.sub(r"[^a-z0-9]+", "-", (value or "").strip().lower())
+    return slug.strip("-") or "software"
+
+
+def allocate_software_key(
+    conn: sqlite3.Connection,
+    name: str,
+    preferred: str | None = None,
+    *,
+    reserved: set[str] | None = None,
+) -> str:
+    """Return a unique software_key not already in DB or reserved."""
+    reserved = reserved if reserved is not None else set()
+    base = slugify_software_key(preferred or name)
+    existing = {
+        r[0]
+        for r in conn.execute("SELECT software_key FROM software").fetchall()
+    }
+    taken = existing | reserved
+    if base not in taken:
+        return base
+    n = 2
+    while f"{base}-{n}" in taken:
+        n += 1
+    return f"{base}-{n}"
+
+
+def _opt_text(value: str | None) -> str | None:
+    return (value or "").strip() or None
+
+
+def _as_bool_int(value: bool | int | str | None) -> int:
+    if isinstance(value, bool):
+        return 1 if value else 0
+    if isinstance(value, int):
+        return 1 if value else 0
+    return 1 if str(value or "").strip().lower() in {"1", "yes", "true", "y", "on"} else 0
+
+
 def count_software_assignments(conn: sqlite3.Connection, software_id: int) -> int:
     row = conn.execute(
         "SELECT COUNT(*) AS n FROM assignment WHERE software_id = ?",
@@ -459,7 +539,7 @@ def count_software_assignments(conn: sqlite3.Connection, software_id: int) -> in
 def create_software(
     conn: sqlite3.Connection,
     *,
-    software_key: str,
+    software_key: str = "",
     name: str,
     publisher: str | None = None,
     license_type: str = "unknown",
@@ -471,14 +551,23 @@ def create_software(
     notes: str | None = None,
     seat_count: int = 0,
     yearly_cost: float = 0.0,
+    users: str | None = None,
+    external_use: bool | int = False,
+    external_facing: bool | int = False,
+    support_link: str | None = None,
+    support_email: str | None = None,
+    support_phone: str | None = None,
+    support_hours: str | None = None,
+    able_to_retire: str | None = None,
+    able_to_replace: str | None = None,
+    sensitive_data: str | None = None,
+    sensitive_data_details: str | None = None,
 ) -> int:
     """Insert software with seats/cost on the row itself. Returns software id."""
-    key = software_key.strip()
-    if not key:
-        raise ValueError("software_key is required")
     nm = name.strip()
     if not nm:
         raise ValueError("name is required")
+    key = (software_key or "").strip() or allocate_software_key(conn, nm)
     lt = _normalize_license_type(license_type)
     owner_id = (owner_employee_id or "").strip() or None
     if owner_id and get_person(conn, owner_id) is None:
@@ -490,22 +579,37 @@ def create_software(
             software_key, name, publisher, license_type,
             seat_count, yearly_cost,
             primary_department, owner_employee_id, owner_name,
-            is_contract, status, notes
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            is_contract, status, notes,
+            users, external_use, external_facing,
+            support_link, support_email, support_phone, support_hours,
+            able_to_retire, able_to_replace,
+            sensitive_data, sensitive_data_details
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             key,
             nm,
-            (publisher or "").strip() or None,
+            _opt_text(publisher),
             lt,
             int(seat_count or 0),
             float(yearly_cost or 0),
-            (primary_department or "").strip() or None,
+            _opt_text(primary_department),
             owner_id,
-            (owner_name or "").strip() or None,
+            _opt_text(owner_name),
             1 if is_contract else 0,
             (status or "active").strip() or "active",
-            (notes or "").strip() or None,
+            _opt_text(notes),
+            _opt_text(users),
+            _as_bool_int(external_use),
+            _as_bool_int(external_facing),
+            _opt_text(support_link),
+            _opt_text(support_email),
+            _opt_text(support_phone),
+            _opt_text(support_hours),
+            _opt_text(able_to_retire),
+            _opt_text(able_to_replace),
+            _opt_text(sensitive_data),
+            _opt_text(sensitive_data_details),
         ),
     )
     conn.commit()
@@ -527,6 +631,17 @@ def update_software(
     notes: str | None = None,
     seat_count: int = 0,
     yearly_cost: float = 0.0,
+    users: str | None = None,
+    external_use: bool | int = False,
+    external_facing: bool | int = False,
+    support_link: str | None = None,
+    support_email: str | None = None,
+    support_phone: str | None = None,
+    support_hours: str | None = None,
+    able_to_retire: str | None = None,
+    able_to_replace: str | None = None,
+    sensitive_data: str | None = None,
+    sensitive_data_details: str | None = None,
 ) -> None:
     """Update software metadata including seats/cost. software_key is locked after create."""
     nm = name.strip()
@@ -550,21 +665,43 @@ def update_software(
             owner_name = ?,
             is_contract = ?,
             status = ?,
-            notes = ?
+            notes = ?,
+            users = ?,
+            external_use = ?,
+            external_facing = ?,
+            support_link = ?,
+            support_email = ?,
+            support_phone = ?,
+            support_hours = ?,
+            able_to_retire = ?,
+            able_to_replace = ?,
+            sensitive_data = ?,
+            sensitive_data_details = ?
         WHERE id = ?
         """,
         (
             nm,
-            (publisher or "").strip() or None,
+            _opt_text(publisher),
             lt,
             int(seat_count or 0),
             float(yearly_cost or 0),
-            (primary_department or "").strip() or None,
+            _opt_text(primary_department),
             owner_id,
-            (owner_name or "").strip() or None,
+            _opt_text(owner_name),
             1 if is_contract else 0,
             (status or "active").strip() or "active",
-            (notes or "").strip() or None,
+            _opt_text(notes),
+            _opt_text(users),
+            _as_bool_int(external_use),
+            _as_bool_int(external_facing),
+            _opt_text(support_link),
+            _opt_text(support_email),
+            _opt_text(support_phone),
+            _opt_text(support_hours),
+            _opt_text(able_to_retire),
+            _opt_text(able_to_replace),
+            _opt_text(sensitive_data),
+            _opt_text(sensitive_data_details),
             software_id,
         ),
     )

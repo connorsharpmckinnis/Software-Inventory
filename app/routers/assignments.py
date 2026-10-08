@@ -128,6 +128,118 @@ def assignment_create(
     )
 
 
+@router.get("/bulk", response_class=HTMLResponse)
+def assignment_bulk_form(
+    request: Request,
+    software_id: str | None = None,
+    department: str | None = None,
+    status: str | None = None,
+    q: str | None = None,
+    error: str | None = None,
+) -> HTMLResponse:
+    conn = connect()
+    try:
+        software_opts = queries.all_software_options(conn)
+        people = queries.list_people(
+            conn,
+            q=q or None,
+            department=department or None,
+            status=status or None,
+            sort="name",
+            order="asc",
+        )
+        options = queries.people_filter_options(conn)
+        already: set[str] = set()
+        if software_id:
+            soft = queries.get_software(conn, software_id)
+            if soft is not None:
+                already = {
+                    r["employee_id"]
+                    for r in queries.software_assignments(conn, int(soft["id"]))
+                }
+    finally:
+        conn.close()
+
+    return templates.TemplateResponse(
+        request,
+        "assignments/bulk.html",
+        {
+            "title": "Bulk assign",
+            "software_opts": software_opts,
+            "people": people,
+            "options": options,
+            "already_assigned": already,
+            "filters": {
+                "software_id": software_id or "",
+                "department": department or "",
+                "status": status or "",
+                "q": q or "",
+            },
+            "error": error or request.query_params.get("error"),
+        },
+    )
+
+
+@router.post("/bulk")
+async def assignment_bulk_create(request: Request) -> RedirectResponse:
+    form = await request.form()
+    software_id_raw = (form.get("software_id") or "").strip()
+    notes = (form.get("notes") or "").strip()
+    person_ids = [
+        str(v).strip()
+        for v in form.getlist("person_ids")
+        if str(v).strip()
+    ]
+
+    if not software_id_raw:
+        return RedirectResponse(
+            "/assignments/bulk?error=Select+a+software+title",
+            status_code=HTTP_303_SEE_OTHER,
+        )
+    if not person_ids:
+        return RedirectResponse(
+            f"/assignments/bulk?software_id={software_id_raw}"
+            f"&error=Select+at+least+one+person",
+            status_code=HTTP_303_SEE_OTHER,
+        )
+
+    conn = connect()
+    try:
+        soft = queries.get_software(conn, software_id_raw)
+        if soft is None:
+            return RedirectResponse(
+                "/assignments/bulk?error=Software+not+found",
+                status_code=HTTP_303_SEE_OTHER,
+            )
+        counts = queries.bulk_create_assignments(
+            conn,
+            software_id=int(soft["id"]),
+            person_ids=person_ids,
+            notes=notes or None,
+        )
+        key = soft["software_key"]
+    finally:
+        conn.close()
+
+    flash = (
+        f"Assigned {counts['created']} people to {key}"
+        + (
+            f" ({counts['skipped']} already assigned)"
+            if counts["skipped"]
+            else ""
+        )
+        + (
+            f"; {counts['invalid']} invalid ID(s) skipped"
+            if counts["invalid"]
+            else ""
+        )
+    )
+    return RedirectResponse(
+        f"/software/{key}?flash={flash.replace(' ', '+')}",
+        status_code=HTTP_303_SEE_OTHER,
+    )
+
+
 @router.get("/{assignment_id}/edit", response_class=HTMLResponse)
 def assignment_edit(
     request: Request,

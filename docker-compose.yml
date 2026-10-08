@@ -1,4 +1,4 @@
-wdsservices:
+services:
   web:
     build: .
     ports:

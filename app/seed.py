@@ -96,19 +96,22 @@ def upsert_people(conn: sqlite3.Connection, employees: list[dict[str, str]]) -> 
         employee_id = (row.get("employee_id") or "").strip()
         if not employee_id:
             continue
+        person_type = (row.get("type") or "employee").strip().lower() or "employee"
+        status = (row.get("status") or "active").strip().lower() or "active"
         conn.execute(
             """
             INSERT INTO person (
                 employee_id, first_name, last_name, department_name,
-                fund_code, email, status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                fund_code, email, status, type
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(employee_id) DO UPDATE SET
                 first_name = excluded.first_name,
                 last_name = excluded.last_name,
                 department_name = excluded.department_name,
                 fund_code = excluded.fund_code,
                 email = excluded.email,
-                status = excluded.status
+                status = excluded.status,
+                type = excluded.type
             """,
             (
                 employee_id,
@@ -117,7 +120,8 @@ def upsert_people(conn: sqlite3.Connection, employees: list[dict[str, str]]) -> 
                 (row.get("department_name") or "").strip() or None,
                 (row.get("fund_code") or "").strip(),
                 (row.get("email") or "").strip() or None,
-                (row.get("status") or "active").strip() or "active",
+                status,
+                person_type,
             ),
         )
         n += 1
@@ -144,8 +148,12 @@ def upsert_software(
                 software_key, name, publisher, license_type,
                 seat_count, yearly_cost,
                 primary_department, owner_employee_id, owner_name,
-                is_contract, status, notes
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                is_contract, status, notes,
+                users, external_use, external_facing,
+                support_link, support_email, support_phone, support_hours,
+                able_to_retire, able_to_replace,
+                sensitive_data, sensitive_data_details
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(software_key) DO UPDATE SET
                 name = excluded.name,
                 publisher = excluded.publisher,
@@ -157,7 +165,18 @@ def upsert_software(
                 owner_name = excluded.owner_name,
                 is_contract = excluded.is_contract,
                 status = excluded.status,
-                notes = excluded.notes
+                notes = excluded.notes,
+                users = excluded.users,
+                external_use = excluded.external_use,
+                external_facing = excluded.external_facing,
+                support_link = excluded.support_link,
+                support_email = excluded.support_email,
+                support_phone = excluded.support_phone,
+                support_hours = excluded.support_hours,
+                able_to_retire = excluded.able_to_retire,
+                able_to_replace = excluded.able_to_replace,
+                sensitive_data = excluded.sensitive_data,
+                sensitive_data_details = excluded.sensitive_data_details
             """,
             (
                 key,
@@ -172,6 +191,17 @@ def upsert_software(
                 1 if _truthy(row.get("is_contract")) else 0,
                 (row.get("status") or "active").strip() or "active",
                 (row.get("notes") or "").strip() or None,
+                (row.get("users") or "").strip() or None,
+                1 if _truthy(row.get("external_use")) else 0,
+                1 if _truthy(row.get("external_facing")) else 0,
+                (row.get("support_link") or "").strip() or None,
+                (row.get("support_email") or "").strip() or None,
+                (row.get("support_phone") or "").strip() or None,
+                (row.get("support_hours") or "").strip() or None,
+                (row.get("able_to_retire") or "").strip() or None,
+                (row.get("able_to_replace") or "").strip() or None,
+                (row.get("sensitive_data") or "").strip() or None,
+                (row.get("sensitive_data_details") or "").strip() or None,
             ),
         )
         software_n += 1

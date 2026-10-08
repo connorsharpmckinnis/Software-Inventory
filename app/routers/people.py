@@ -54,6 +54,8 @@ def people_list(
                 "sort": sort,
                 "order": order,
             },
+            "flash": request.query_params.get("flash"),
+            "error": request.query_params.get("error"),
         },
     )
 
